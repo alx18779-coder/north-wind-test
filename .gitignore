@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info/
+.venv/
+.pytest_cache/
+.uv-cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+*.coverage
+coverage/
+
+# Node / Next.js (frontend)
+frontend/node_modules/
+frontend/.next/
+frontend/.turbo/
+frontend/.vercel/
+.pnpm-store/
+pnpm-debug.log*
+npm-debug.log*
+yarn-error.log*
+.eslintcache
+
+# Environment files
+.env
+.env.*.local
+frontend/.env.local
+*.env.local
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local databases & artifacts
+*.db
+*.sqlite*
