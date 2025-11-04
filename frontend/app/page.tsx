@@ -25,6 +25,20 @@ export default function HomePage() {
           开始练习
         </Link>
       </div>
+      <div className="mt-6 flex flex-wrap gap-3 text-sm">
+        <Link
+          href="/docs/northwind-schema"
+          className="rounded border border-slate-700 px-3 py-1 text-slate-200 hover:bg-slate-800"
+        >
+          表结构（DDL）
+        </Link>
+        <Link
+          href="/docs/northwind-er"
+          className="rounded border border-slate-700 px-3 py-1 text-slate-200 hover:bg-slate-800"
+        >
+          ER 图/关系概览
+        </Link>
+      </div>
     </section>
   );
 }

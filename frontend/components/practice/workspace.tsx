@@ -1,6 +1,6 @@
 "use client";
 
-import { MouseEvent as ReactMouseEvent, useEffect, useState } from "react";
+import { MouseEvent as ReactMouseEvent, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import useExecuteQuestion from "../../lib/hooks/use-execute-question";
@@ -22,14 +22,35 @@ export default function PracticeWorkspace({ question, instanceTag, className }: 
   const [error, setError] = useState<string | null>(null);
   const result = executeMutation.data;
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
+  const prevQuestionIdRef = useRef<number | undefined>(undefined);
 
+  // 恢复/保存每道题的 SQL 草稿，切换题目时不清空编辑器
   useEffect(() => {
-    if (question) {
-      setSql(`-- ${question.title}\n`);
+    const currentId = question?.id;
+    const prevId = prevQuestionIdRef.current;
+    // 保存上一题的草稿
+    if (prevId) {
+      try {
+        localStorage.setItem(`practice-sql-${prevId}`, sql);
+      } catch {}
+    }
+    // 切换到新题时尝试恢复本地草稿；若无草稿则保留现有 SQL（不清空）
+    if (currentId && currentId !== prevId) {
+      try {
+        const saved = localStorage.getItem(`practice-sql-${currentId}`);
+        if (saved && saved.length > 0) {
+          setSql(saved);
+        }
+      } catch {}
       setError(null);
       executeMutation.reset();
     }
+    prevQuestionIdRef.current = currentId;
+    // 仅在题目 id 变化时执行
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question?.id]);
+
+  // 移除切题即覆盖 SQL 的行为
 
   useEffect(() => {
     if (!result) {
