@@ -18,13 +18,15 @@ export default function PracticeWorkspace({ question, instanceTag, className }: 
   const queryClient = useQueryClient();
   const toast = useToast();
   const executeMutation = useExecuteQuestion();
-  const [sql, setSql] = useState("SELECT * FROM customers LIMIT 10;");
+  const [sql, setSql] = useState("");
   const [error, setError] = useState<string | null>(null);
   const result = executeMutation.data;
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
   const prevQuestionIdRef = useRef<number | undefined>(undefined);
 
-  // 恢复/保存每道题的 SQL 草稿，切换题目时不清空编辑器
+  // 恢复/保存每道题的 SQL 草稿：
+  // - 切换题目前保存上一题草稿
+  // - 打开新题：若有草稿则恢复；否则在编辑器中注入题目信息的注释（题号/标题/期望字段/描述）
   useEffect(() => {
     const currentId = question?.id;
     const prevId = prevQuestionIdRef.current;
@@ -40,6 +42,20 @@ export default function PracticeWorkspace({ question, instanceTag, className }: 
         const saved = localStorage.getItem(`practice-sql-${currentId}`);
         if (saved && saved.length > 0) {
           setSql(saved);
+        } else if (question) {
+          const lines: string[] = [];
+          lines.push(`-- 题号: ${question.question_id}  标题: ${question.title}`);
+          if (question.required_fields) {
+            lines.push(`-- 期望字段: ${question.required_fields}`);
+          }
+          if (question.description) {
+            lines.push(`-- 描述:`);
+            for (const l of question.description.split("\n")) {
+              lines.push(`-- ${l}`);
+            }
+          }
+          lines.push("");
+          setSql(lines.join("\n"));
         }
       } catch {}
       setError(null);
