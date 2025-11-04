@@ -15,10 +15,20 @@ export default function NorthwindSchemaPage() {
 
   return (
     <section className="mx-auto max-w-5xl px-6 py-10">
-      <h1 className="text-2xl font-semibold text-slate-50">Northwind 表结构（PostgreSQL DDL）</h1>
-      <p className="mt-2 text-sm text-slate-400">
-        以下为仓库提供的 Northwind PostgreSQL 初始化脚本节选，便于快速查阅表定义与外键约束。
-      </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-50">Northwind 表结构（PostgreSQL DDL）</h1>
+          <p className="mt-2 text-sm text-slate-400">
+            以下为仓库提供的 Northwind PostgreSQL 初始化脚本节选，便于快速查阅表定义与外键约束。
+          </p>
+        </div>
+        <a
+          href="/docs/northwind-schema/download"
+          className="rounded border border-slate-700 px-3 py-1 text-xs text-slate-200 hover:bg-slate-800"
+        >
+          下载 SQL 文件
+        </a>
+      </div>
       <div className="mt-4 rounded border border-slate-800 bg-slate-900/60 p-4">
         <pre className="max-h-[70vh] overflow-auto text-xs leading-5 text-slate-200">
           {ddl}
@@ -27,4 +37,3 @@ export default function NorthwindSchemaPage() {
     </section>
   );
 }
-
