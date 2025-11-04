@@ -16,8 +16,10 @@ export default function QuestionDetail({ question, loading, selectedInstance }: 
   const toast = useToast();
   const referenceMutation = useReferenceAnswer();
   const [referenceSql, setReferenceSql] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
   useEffect(() => {
     setReferenceSql(null);
+    setOpen(false);
   }, [question?.id, selectedInstance]);
   if (loading) {
     return <div className="rounded border border-slate-800 bg-slate-900 p-6 text-sm text-slate-400">正在加载题目...</div>;
@@ -30,12 +32,14 @@ export default function QuestionDetail({ question, loading, selectedInstance }: 
   const fallbackInstance = question.instance_tags[0] ?? "pg_default";
   const activeInstance = selectedInstance ?? fallbackInstance;
 
-  const handleReference = async () => {
+  const fetchReference = async () => {
     try {
       const sql = await referenceMutation.mutateAsync({ questionId: question.id, instanceTag: activeInstance });
       setReferenceSql(sql);
+      return sql;
     } catch (err: any) {
       toast.showError("无法获取参考答案");
+      throw err;
     }
   };
 
@@ -65,27 +69,44 @@ export default function QuestionDetail({ question, loading, selectedInstance }: 
             <p className="mt-1 text-sm text-slate-300">{question.notes}</p>
           </div>
         )}
-        <details
-          onToggle={(e) => {
-            const open = (e.currentTarget as HTMLDetailsElement).open;
-            if (open && !referenceSql && !referenceMutation.isPending) {
-              void handleReference();
-            }
-          }}
-          className="rounded border border-slate-800 bg-slate-900/40"
-        >
-          <summary className="cursor-pointer select-none px-3 py-2 text-xs text-slate-300 hover:bg-slate-800/50">
-            参考答案 {referenceMutation.isPending && <span className="ml-2 text-slate-500">（加载中...）</span>}
-          </summary>
-          {referenceSql && (
+        <div className="rounded border border-slate-800 bg-slate-900/40">
+          <button
+            className="flex w-full items-center justify-between px-3 py-2 text-left text-xs text-slate-300 hover:bg-slate-800/50"
+            onClick={async () => {
+              if (open) {
+                setOpen(false);
+                return;
+              }
+              if (referenceSql) {
+                setOpen(true);
+              } else if (!referenceMutation.isPending) {
+                try {
+                  await fetchReference();
+                  setOpen(true);
+                } catch {
+                  // error already toasted
+                }
+              }
+            }}
+          >
+            <span className="inline-flex items-center gap-2">
+              <span
+                className={
+                  "inline-block h-0 w-0 border-l-4 border-t-4 border-b-4 border-l-slate-300 border-t-transparent border-b-transparent transition-transform " +
+                  (open ? "rotate-90" : "rotate-0")
+                }
+                aria-hidden
+              />
+              参考答案
+            </span>
+            {referenceMutation.isPending && <span className="text-slate-500">（加载中...）</span>}
+          </button>
+          {open && referenceSql && (
             <pre className="m-3 overflow-x-auto rounded border border-slate-800 bg-slate-950 p-3 text-xs text-slate-200">
               {referenceSql}
             </pre>
           )}
-          {!referenceSql && !referenceMutation.isPending && (
-            <div className="m-3 text-xs text-slate-500">展开后自动加载参考答案。</div>
-          )}
-        </details>
+        </div>
       </section>
     </div>
   );
