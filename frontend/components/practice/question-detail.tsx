@@ -65,21 +65,27 @@ export default function QuestionDetail({ question, loading, selectedInstance }: 
             <p className="mt-1 text-sm text-slate-300">{question.notes}</p>
           </div>
         )}
-        <div>
-          <h3 className="text-xs uppercase text-slate-400">参考答案</h3>
-          <button
-            onClick={handleReference}
-            disabled={referenceMutation.isPending}
-            className="mt-2 rounded border border-slate-700 px-3 py-1 text-xs text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed"
-          >
-            {referenceMutation.isPending ? "加载中..." : referenceSql ? "重新获取" : "查看参考答案"}
-          </button>
+        <details
+          onToggle={(e) => {
+            const open = (e.currentTarget as HTMLDetailsElement).open;
+            if (open && !referenceSql && !referenceMutation.isPending) {
+              void handleReference();
+            }
+          }}
+          className="rounded border border-slate-800 bg-slate-900/40"
+        >
+          <summary className="cursor-pointer select-none px-3 py-2 text-xs text-slate-300 hover:bg-slate-800/50">
+            参考答案 {referenceMutation.isPending && <span className="ml-2 text-slate-500">（加载中...）</span>}
+          </summary>
           {referenceSql && (
-            <pre className="mt-2 overflow-x-auto rounded border border-slate-800 bg-slate-950 p-3 text-xs text-slate-200">
+            <pre className="m-3 overflow-x-auto rounded border border-slate-800 bg-slate-950 p-3 text-xs text-slate-200">
               {referenceSql}
             </pre>
           )}
-        </div>
+          {!referenceSql && !referenceMutation.isPending && (
+            <div className="m-3 text-xs text-slate-500">展开后自动加载参考答案。</div>
+          )}
+        </details>
       </section>
     </div>
   );
