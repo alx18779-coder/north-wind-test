@@ -41,6 +41,12 @@ export default function QuestionTable() {
       <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
         <h2 className="text-sm font-semibold text-slate-100">题库</h2>
         <div className="flex gap-2">
+          <Link
+            href="/admin/questions/import"
+            className="rounded border border-slate-700 px-3 py-1 text-xs text-slate-200 hover:bg-slate-800"
+          >
+            导入
+          </Link>
           <button
             onClick={async () => {
               const response = await adminApi.exportQuestions();
