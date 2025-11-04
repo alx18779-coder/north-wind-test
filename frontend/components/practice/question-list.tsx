@@ -16,11 +16,17 @@ interface Props {
   questions: PracticeQuestionSummary[] | undefined;
   loading: boolean;
   error: boolean;
+  selectedInstance: string | null;
+  onInstanceChange: (instanceTag: string) => void;
 }
 
-export default function QuestionList({ selectedId, onSelect, questions, loading, error }: Props) {
+export default function QuestionList({ selectedId, onSelect, questions, loading, error, selectedInstance, onInstanceChange }: Props) {
   const [search, setSearch] = useState("");
   const [difficulty, setDifficulty] = useState("all");
+  const selectedQuestion = useMemo(() => {
+    if (!selectedId || !questions) return undefined;
+    return questions.find((q) => q.id === selectedId);
+  }, [selectedId, questions]);
 
   const filtered = useMemo(() => {
     const source = questions ?? [];
@@ -44,6 +50,19 @@ export default function QuestionList({ selectedId, onSelect, questions, loading,
           onChange={(event) => setSearch(event.target.value)}
           className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
         />
+        {selectedQuestion && selectedQuestion.instance_tags.length > 0 && (
+          <select
+            value={selectedInstance ?? selectedQuestion.instance_tags[0]}
+            onChange={(e) => onInstanceChange(e.target.value)}
+            className="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
+          >
+            {selectedQuestion.instance_tags.map((tag) => (
+              <option key={tag} value={tag}>
+                {tag}
+              </option>
+            ))}
+          </select>
+        )}
         <select
           value={difficulty}
           onChange={(event) => setDifficulty(event.target.value)}

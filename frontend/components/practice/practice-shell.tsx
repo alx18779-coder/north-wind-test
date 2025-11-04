@@ -56,13 +56,14 @@ export default function PracticeShell() {
                 questions={questionsQuery.data}
                 loading={questionsQuery.isLoading}
                 error={Boolean(questionsQuery.error)}
+                selectedInstance={selectedInstance}
+                onInstanceChange={setSelectedInstance}
               />
               <div className="flex h-full min-h-0 flex-col gap-6 overflow-hidden">
                 <QuestionDetail
                   question={questionDetail}
                   loading={questionDetailQuery.isLoading || loadingInitial}
                   selectedInstance={selectedInstance}
-                  onInstanceChange={setSelectedInstance}
                 />
                 <div className="flex flex-1 flex-col overflow-hidden min-h-0">
                   <PracticeWorkspace

@@ -9,11 +9,10 @@ import useToast from "../../lib/hooks/use-toast";
 interface Props {
   question: PracticeQuestionDetail | undefined;
   loading: boolean;
-  onInstanceChange: (instanceTag: string) => void;
   selectedInstance: string | null;
 }
 
-export default function QuestionDetail({ question, loading, onInstanceChange, selectedInstance }: Props) {
+export default function QuestionDetail({ question, loading, selectedInstance }: Props) {
   const toast = useToast();
   const referenceMutation = useReferenceAnswer();
   const [referenceSql, setReferenceSql] = useState<string | null>(null);
@@ -50,14 +49,6 @@ export default function QuestionDetail({ question, loading, onInstanceChange, se
         </div>
       </header>
       <section className="mt-4 space-y-4">
-        <div>
-          <h3 className="text-xs uppercase text-slate-400">题目描述</h3>
-          <p className="mt-1 whitespace-pre-wrap text-sm text-slate-200">{question.description}</p>
-        </div>
-        <div>
-          <h3 className="text-xs uppercase text-slate-400">期望字段</h3>
-          <p className="mt-1 text-sm text-slate-300">{question.required_fields}</p>
-        </div>
         {question.hints.length > 0 && (
           <div>
             <h3 className="text-xs uppercase text-slate-400">提示</h3>
@@ -74,24 +65,6 @@ export default function QuestionDetail({ question, loading, onInstanceChange, se
             <p className="mt-1 text-sm text-slate-300">{question.notes}</p>
           </div>
         )}
-        <div>
-          <h3 className="text-xs uppercase text-slate-400">关联实例</h3>
-          {question.instance_tags.length > 0 ? (
-            <select
-              value={activeInstance}
-              onChange={(event) => onInstanceChange(event.target.value)}
-              className="mt-1 rounded border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
-            >
-              {question.instance_tags.map((tag) => (
-                <option key={tag} value={tag}>
-                  {tag}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <div className="mt-1 text-xs text-slate-500">No database instances tagged for this question.</div>
-          )}
-        </div>
         <div>
           <h3 className="text-xs uppercase text-slate-400">参考答案</h3>
           <button
