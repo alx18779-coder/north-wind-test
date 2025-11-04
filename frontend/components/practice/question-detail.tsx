@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { PracticeQuestionDetail } from "../../lib/practice-api";
 import useReferenceAnswer from "../../lib/hooks/use-reference-answer";
@@ -17,6 +17,12 @@ export default function QuestionDetail({ question, loading, selectedInstance }: 
   const referenceMutation = useReferenceAnswer();
   const [referenceSql, setReferenceSql] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+  const [erOpen, setErOpen] = useState(false);
+  const erWrapperRef = useRef<HTMLDivElement | null>(null);
+  const erOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const erDragRef = useRef<{ dragging: boolean; startX: number; startY: number; startOffsetX: number; startOffsetY: number } | null>(
+    null
+  );
   useEffect(() => {
     setReferenceSql(null);
     setOpen(false);
@@ -53,6 +59,63 @@ export default function QuestionDetail({ question, loading, selectedInstance }: 
         </div>
       </header>
       <section className="mt-4 space-y-4">
+        <div className="rounded border border-slate-800 bg-slate-900/40">
+          <button
+            className="flex w-full items-center justify-between px-3 py-2 text-left text-xs text-slate-300 hover:bg-slate-800/50"
+            onClick={() => setErOpen((v) => !v)}
+          >
+            <span className="inline-flex items-center gap-2">
+              <span
+                className={
+                  "inline-block h-0 w-0 border-l-4 border-t-4 border-b-4 border-l-slate-300 border-t-transparent border-b-transparent transition-transform " +
+                  (erOpen ? "rotate-90" : "rotate-0")
+                }
+                aria-hidden
+              />
+              ER 关系图
+            </span>
+          </button>
+          {erOpen && (
+            <div className="m-3 rounded border border-slate-800 bg-slate-950 p-2">
+              <div
+                ref={erWrapperRef}
+                className="relative h-80 w-full overflow-hidden rounded bg-slate-900"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  const { x, y } = erOffsetRef.current;
+                  erDragRef.current = { dragging: true, startX: e.clientX, startY: e.clientY, startOffsetX: x, startOffsetY: y };
+                }}
+                onMouseMove={(e) => {
+                  if (!erDragRef.current?.dragging) return;
+                  const dx = e.clientX - erDragRef.current.startX;
+                  const dy = e.clientY - erDragRef.current.startY;
+                  const next = { x: erDragRef.current.startOffsetX + dx, y: erDragRef.current.startOffsetY + dy };
+                  erOffsetRef.current = next;
+                  const img = erWrapperRef.current?.querySelector<HTMLImageElement>("img");
+                  if (img) {
+                    img.style.transform = `translate(${next.x}px, ${next.y}px)`;
+                  }
+                }}
+                onMouseUp={() => {
+                  if (erDragRef.current) erDragRef.current.dragging = false;
+                }}
+                onMouseLeave={() => {
+                  if (erDragRef.current) erDragRef.current.dragging = false;
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/er-northwind.png"
+                  alt="Northwind ER"
+                  className="select-none"
+                  style={{ width: 1200, height: "auto", transform: `translate(${erOffsetRef.current.x}px, ${erOffsetRef.current.y}px)` }}
+                  draggable={false}
+                />
+              </div>
+              <div className="mt-2 text-[11px] text-slate-500">提示：按住图片拖动以查看其他区域。</div>
+            </div>
+          )}
+        </div>
         {question.hints.length > 0 && (
           <div>
             <h3 className="text-xs uppercase text-slate-400">提示</h3>
