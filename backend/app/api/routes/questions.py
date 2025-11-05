@@ -76,6 +76,17 @@ def validate_import(payload: list[QuestionCreate], session: Session = Depends(ge
         if item.status not in allowed_status:
             add("status", f"不支持的状态: {item.status}")
 
+        # question_id uniqueness
+        if item.question_id:
+            exists = (
+                session.query(Question)
+                .filter(Question.question_id == item.question_id)
+                .first()
+                is not None
+            )
+            if exists:
+                add("question_id", f"题号已存在: {item.question_id}")
+
         # instance tag existence
         missing = [t for t in item.instance_tags if t not in existing_tags]
         if missing:
@@ -93,6 +104,17 @@ def validate_import(payload: list[QuestionCreate], session: Session = Depends(ge
             mapped_engines = {tag_engine[t] for t in item.instance_tags if t in tag_engine}
             if mapped_engines and not (engines & mapped_engines):
                 add("reference_sql", f"参考 SQL 未覆盖实例引擎: 需要 {', '.join(sorted(mapped_engines))}")
+
+            # Static read-only check: forbid DML/DDL keywords
+            forbidden = ("insert", "update", "delete", "create", "alter", "drop", "truncate", "grant", "revoke")
+            for ref in item.reference_sql:
+                sql_lc = (ref.sql_text or "").lower()
+                # naive comment strip: remove leading '--' lines
+                stripped = "\n".join(
+                    line for line in sql_lc.splitlines() if not line.strip().startswith("--")
+                )
+                if any(f" {kw} " in f" {stripped} " for kw in forbidden):
+                    add("reference_sql", "参考 SQL 需为只读查询，禁止包含 DML/DDL 关键字")
 
         if row_errors:
             errors.extend(row_errors)

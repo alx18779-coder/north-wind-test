@@ -201,6 +201,9 @@ def run_init_job(session: Session, job: DbInitJob) -> DbInitJob:
         )
     finally:
         job.completed_at = datetime.now(timezone.utc)
+        # truncate overly long logs to avoid UI lag
+        if job.log and len(job.log) > 131072:  # 128 KiB
+            job.log = job.log[:131072] + "\n...(truncated)"
         session.add(job)
         session.commit()
         session.refresh(job)

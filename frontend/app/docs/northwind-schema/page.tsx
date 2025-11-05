@@ -22,12 +22,20 @@ export default function NorthwindSchemaPage() {
             以下为仓库提供的 Northwind PostgreSQL 初始化脚本节选，便于快速查阅表定义与外键约束。
           </p>
         </div>
-        <a
-          href="/docs/northwind-schema/download"
-          className="rounded border border-slate-700 px-3 py-1 text-xs text-slate-200 hover:bg-slate-800"
-        >
-          下载 SQL 文件
-        </a>
+        <div className="flex gap-2">
+          <a
+            href="/docs/northwind-schema/download"
+            className="rounded border border-slate-700 px-3 py-1 text-xs text-slate-200 hover:bg-slate-800"
+          >
+            下载 PostgreSQL SQL 文件
+          </a>
+          <a
+            href="/docs/northwind-schema/mysql"
+            className="rounded border border-slate-700 px-3 py-1 text-xs text-slate-200 hover:bg-slate-800"
+          >
+            下载 MySQL SQL 文件
+          </a>
+        </div>
       </div>
       <div className="mt-4 rounded border border-slate-800 bg-slate-900/60 p-4">
         <pre className="max-h-[70vh] overflow-auto text-xs leading-5 text-slate-200">

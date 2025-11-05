@@ -85,6 +85,7 @@ export default function QuestionImport() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [kind, setKind] = useState<FileKind | null>(null);
+  const [parsedPayload, setParsedPayload] = useState<QuestionCreateRequest[] | null>(null);
   const [validateResult, setValidateResult] = useState<
     | { ok: boolean; errors: Array<{ index: number; field: string; message: string }>; stats: { rows: number; valid: number; invalid: number } }
     | null
@@ -145,16 +146,10 @@ export default function QuestionImport() {
           return item;
         });
       }
-      // 若已经有校验结果且未通过，阻止直接导入
-      if (validateResult && !validateResult.ok) {
-        throw new Error("校验未通过，请先修复错误或重新校验");
-      }
-      const response = await adminApi.importQuestions(payload);
-      setMessage(`导入成功 ${response.data.success_count} 条，失败 ${response.data.failure_count} 条`);
-      toast.showSuccess("导入完成");
-      if (response.data.report?.failures?.length) {
-        setError(JSON.stringify(response.data.report.failures, null, 2));
-      }
+      // 仅解析并缓存，不直接导入
+      setParsedPayload(payload);
+      setValidateResult(null);
+      setMessage("已解析，建议先进行校验");
     } catch (err: any) {
       setError(err?.message ?? "导入失败");
       toast.showError("题目导入失败");
@@ -168,45 +163,37 @@ export default function QuestionImport() {
     setMessage(null);
     setError(null);
     try {
-      const input = document.querySelector<HTMLInputElement>('input[type="file"]');
-      const file = input?.files?.[0];
-      if (!file) throw new Error("请先选择文件");
-      const text = await file.text();
-      const lower = file.name.toLowerCase();
-      const detected: FileKind = lower.endsWith(".csv") || file.type.includes("csv") ? "csv" : "json";
-      let payload: QuestionCreateRequest[] = [];
-      if (detected === "json") {
-        payload = JSON.parse(text) as QuestionCreateRequest[];
-      } else {
-        const records = parseCsv(text);
-        payload = records.map((r) => {
-          const refs: Array<{ engine: string; sql_text: string }> = [];
-          if (r.reference_sql_pg) refs.push({ engine: "postgres", sql_text: r.reference_sql_pg });
-          if (r.reference_sql_mysql) refs.push({ engine: "mysql", sql_text: r.reference_sql_mysql });
-          const hintsArr = toArray(r.hints).map((h, i) => ({ display_order: i + 1, content: h }));
-          const instanceTags = toArray(r.instance_tags);
-          return {
-            question_id: r.question_id,
-            title: r.title,
-            description: r.description,
-            required_fields: r.required_fields,
-            difficulty: r.difficulty,
-            category: r.category,
-            status: r.status,
-            instance_tags: instanceTags,
-            notes: r.notes || undefined,
-            reference_sql: refs,
-            hints: hintsArr,
-          } as QuestionCreateRequest;
-        });
-      }
-      const resp = await adminApi.validateQuestions(payload);
+      if (!parsedPayload) throw new Error("请先选择并解析文件");
+      const resp = await adminApi.validateQuestions(parsedPayload);
       setValidateResult(resp.data);
       if (resp.data.ok) toast.showSuccess("校验通过，可导入");
       else toast.showError("校验未通过，请查看错误列表");
     } catch (err: any) {
       setError(err?.message ?? "校验失败");
       setValidateResult(null);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleImport = async () => {
+    setIsUploading(true);
+    setMessage(null);
+    setError(null);
+    try {
+      if (!parsedPayload) throw new Error("请先选择并解析文件");
+      if (validateResult && !validateResult.ok) {
+        throw new Error("校验未通过，请先修复错误或重新校验");
+      }
+      const response = await adminApi.importQuestions(parsedPayload);
+      setMessage(`导入成功 ${response.data.success_count} 条，失败 ${response.data.failure_count} 条`);
+      toast.showSuccess("导入完成");
+      if (response.data.report?.failures?.length) {
+        setError(JSON.stringify(response.data.report.failures, null, 2));
+      }
+    } catch (err: any) {
+      setError(err?.message ?? "导入失败");
+      toast.showError("题目导入失败");
     } finally {
       setIsUploading(false);
     }
@@ -312,6 +299,13 @@ export default function QuestionImport() {
             className="rounded border border-slate-600 px-3 py-1 text-xs text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed"
           >
             校验并预览
+          </button>
+          <button
+            onClick={handleImport}
+            disabled={isUploading || !parsedPayload}
+            className="rounded border border-emerald-600 px-3 py-1 text-xs text-emerald-200 hover:bg-emerald-600/20 disabled:cursor-not-allowed"
+          >
+            导入
           </button>
         </div>
         {fileName && (
