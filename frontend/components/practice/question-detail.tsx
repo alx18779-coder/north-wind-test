@@ -28,6 +28,9 @@ export default function QuestionDetail({ question, loading, selectedInstance }: 
   useEffect(() => {
     setReferenceSql(null);
     setOpen(false);
+    setErOpen(false);
+    setHintsOpen(false);
+    setNotesOpen(false);
   }, [question?.id, selectedInstance]);
   if (loading) {
     return <div className="rounded border border-slate-800 bg-slate-900 p-6 text-sm text-slate-400">正在加载题目...</div>;
