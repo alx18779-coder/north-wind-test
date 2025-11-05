@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from backend.app.db.session import get_session
 from backend.app.models import Question
 from backend.app.schemas.question import QuestionCreate, QuestionOut, QuestionUpdate
+from backend.app.schemas.imports import QuestionsImportResponse, ImportReport
 from backend.app.services import question_service
 
 router = APIRouter(prefix="/admin/questions", tags=["admin-questions"])
@@ -29,14 +30,15 @@ def export_questions(session: Session = Depends(get_session)) -> list[QuestionOu
     return question_service.export_questions(session)
 
 
-@router.post("/import")
-def import_questions(payload: list[QuestionCreate], session: Session = Depends(get_session)) -> dict[str, int | list[dict[str, str]]]:
+@router.post("/import", response_model=QuestionsImportResponse)
+def import_questions(payload: list[QuestionCreate], session: Session = Depends(get_session)) -> QuestionsImportResponse:
     job = question_service.import_questions(session, payload)
-    return {
-        "success_count": job.success_count,
-        "failure_count": job.failure_count,
-        "report": job.report or {},
-    }
+    report = ImportReport.model_validate(job.report or {})
+    return QuestionsImportResponse(
+        success_count=job.success_count,
+        failure_count=job.failure_count,
+        report=report,
+    )
 
 
 @router.get("/{question_id}", response_model=QuestionOut)
