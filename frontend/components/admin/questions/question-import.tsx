@@ -85,6 +85,10 @@ export default function QuestionImport() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [kind, setKind] = useState<FileKind | null>(null);
+  const [validateResult, setValidateResult] = useState<
+    | { ok: boolean; errors: Array<{ index: number; field: string; message: string }>; stats: { rows: number; valid: number; invalid: number } }
+    | null
+  >(null);
   const toast = useToast();
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -141,6 +145,10 @@ export default function QuestionImport() {
           return item;
         });
       }
+      // 若已经有校验结果且未通过，阻止直接导入
+      if (validateResult && !validateResult.ok) {
+        throw new Error("校验未通过，请先修复错误或重新校验");
+      }
       const response = await adminApi.importQuestions(payload);
       setMessage(`导入成功 ${response.data.success_count} 条，失败 ${response.data.failure_count} 条`);
       toast.showSuccess("导入完成");
@@ -150,6 +158,55 @@ export default function QuestionImport() {
     } catch (err: any) {
       setError(err?.message ?? "导入失败");
       toast.showError("题目导入失败");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleValidate = async () => {
+    setIsUploading(true);
+    setMessage(null);
+    setError(null);
+    try {
+      const input = document.querySelector<HTMLInputElement>('input[type="file"]');
+      const file = input?.files?.[0];
+      if (!file) throw new Error("请先选择文件");
+      const text = await file.text();
+      const lower = file.name.toLowerCase();
+      const detected: FileKind = lower.endsWith(".csv") || file.type.includes("csv") ? "csv" : "json";
+      let payload: QuestionCreateRequest[] = [];
+      if (detected === "json") {
+        payload = JSON.parse(text) as QuestionCreateRequest[];
+      } else {
+        const records = parseCsv(text);
+        payload = records.map((r) => {
+          const refs: Array<{ engine: string; sql_text: string }> = [];
+          if (r.reference_sql_pg) refs.push({ engine: "postgres", sql_text: r.reference_sql_pg });
+          if (r.reference_sql_mysql) refs.push({ engine: "mysql", sql_text: r.reference_sql_mysql });
+          const hintsArr = toArray(r.hints).map((h, i) => ({ display_order: i + 1, content: h }));
+          const instanceTags = toArray(r.instance_tags);
+          return {
+            question_id: r.question_id,
+            title: r.title,
+            description: r.description,
+            required_fields: r.required_fields,
+            difficulty: r.difficulty,
+            category: r.category,
+            status: r.status,
+            instance_tags: instanceTags,
+            notes: r.notes || undefined,
+            reference_sql: refs,
+            hints: hintsArr,
+          } as QuestionCreateRequest;
+        });
+      }
+      const resp = await adminApi.validateQuestions(payload);
+      setValidateResult(resp.data);
+      if (resp.data.ok) toast.showSuccess("校验通过，可导入");
+      else toast.showError("校验未通过，请查看错误列表");
+    } catch (err: any) {
+      setError(err?.message ?? "校验失败");
+      setValidateResult(null);
     } finally {
       setIsUploading(false);
     }
@@ -248,6 +305,15 @@ export default function QuestionImport() {
 
       <div className="mt-4 flex flex-col gap-3">
         <input type="file" accept="application/json,text/csv,.csv" onChange={handleFileChange} disabled={isUploading} />
+        <div className="flex gap-2">
+          <button
+            onClick={handleValidate}
+            disabled={isUploading}
+            className="rounded border border-slate-600 px-3 py-1 text-xs text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed"
+          >
+            校验并预览
+          </button>
+        </div>
         {fileName && (
           <div className="text-xs text-slate-400">已选择文件：{fileName}{kind ? `（${kind.toUpperCase()}）` : ""}</div>
         )}
@@ -257,6 +323,35 @@ export default function QuestionImport() {
           <pre className="overflow-x-auto rounded border border-rose-700 bg-rose-950 px-3 py-2 text-xs text-rose-200">
             {error}
           </pre>
+        )}
+        {validateResult && (
+          <div className="mt-2 rounded border border-slate-800 bg-slate-900/60 p-3 text-xs">
+            <div className="mb-2 text-slate-300">
+              校验结果：{validateResult.ok ? "通过" : "未通过"}，总行 {validateResult.stats.rows}，有效 {validateResult.stats.valid}，无效 {validateResult.stats.invalid}
+            </div>
+            {!validateResult.ok && (
+              <div className="max-h-60 overflow-auto rounded border border-slate-800 bg-slate-950 p-2 text-slate-200">
+                <table className="min-w-full text-left">
+                  <thead>
+                    <tr className="text-slate-400">
+                      <th className="px-2 py-1">行号</th>
+                      <th className="px-2 py-1">字段</th>
+                      <th className="px-2 py-1">错误</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {validateResult.errors.map((e, i) => (
+                      <tr key={i} className="border-t border-slate-800">
+                        <td className="px-2 py-1">{e.index + 1}</td>
+                        <td className="px-2 py-1">{e.field}</td>
+                        <td className="px-2 py-1">{e.message}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>

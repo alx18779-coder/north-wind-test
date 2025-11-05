@@ -13,3 +13,20 @@ class QuestionsImportResponse(BaseModel):
     failure_count: int
     report: ImportReport
 
+
+class ValidationErrorItem(BaseModel):
+    index: int
+    field: str
+    message: str
+
+
+class ImportValidateStats(BaseModel):
+    rows: int
+    valid: int
+    invalid: int
+
+
+class QuestionsImportValidateResponse(BaseModel):
+    ok: bool
+    errors: list[ValidationErrorItem] = Field(default_factory=list)
+    stats: ImportValidateStats

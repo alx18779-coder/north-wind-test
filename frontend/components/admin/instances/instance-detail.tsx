@@ -90,8 +90,12 @@ export default function InstanceDetail({ instanceId }: Props) {
   };
 
   const jobs = initJobsQuery.data ?? [];
-  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
-  const toggleExpand = (id: number) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+  // 使用字符串键以避免 TS 对 number 索引的约束告警
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const toggleExpand = (id: number) => {
+    const key = String(id);
+    setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
   const copyText = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -206,7 +210,7 @@ export default function InstanceDetail({ instanceId }: Props) {
                   <div className="mt-1 text-slate-400">
                     {(() => {
                       const isLong = job.log.length > 800;
-                      const isOpen = expanded[job.id] || false;
+                      const isOpen = expanded[String(job.id)] || false;
                       const display = isLong && !isOpen ? job.log.slice(0, 800) + "\n…(已截断，点击展开查看全部)" : job.log;
                       return (
                         <div>

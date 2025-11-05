@@ -167,6 +167,12 @@ const adminApi = {
   importQuestions(payload: QuestionCreateRequest[]) {
     return httpClient.post("/admin/questions/import", payload);
   },
+  validateQuestions(payload: QuestionCreateRequest[]) {
+    return httpClient.post<{ ok: boolean; errors: Array<{ index: number; field: string; message: string }>; stats: { rows: number; valid: number; invalid: number } }>(
+      "/admin/questions/import/validate",
+      payload
+    );
+  },
   listExecutionLogs() {
     return httpClient.get<ExecutionLogItem[]>("/admin/logs/execution");
   },

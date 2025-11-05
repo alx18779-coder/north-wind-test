@@ -21,11 +21,13 @@ export default function PracticeShell() {
     }
   }, [selectedQuestion, questionsQuery.data]);
 
-  useEffect(() => {
-    if (questionDetail && questionDetail.instance_tags.length > 0) {
-      setSelectedInstance((prev) => prev ?? questionDetail.instance_tags[0]);
-    }
-  }, [questionDetail?.id]);
+useEffect(() => {
+  if (!questionDetail || questionDetail.instance_tags.length === 0) return;
+  setSelectedInstance((prev) => {
+    if (!prev) return questionDetail.instance_tags[0] ?? null;
+    return questionDetail.instance_tags.includes(prev) ? prev : (questionDetail.instance_tags[0] ?? null);
+  });
+}, [questionDetail?.id]);
 
   // 当切换实例标签时，如果当前选中题目不支持该标签，则自动切到首个符合条件的题目
   useEffect(() => {
@@ -61,8 +63,8 @@ export default function PracticeShell() {
               <QuestionList
                 selectedId={selectedQuestion}
                 onSelect={(id) => {
+                  // 切换题目时不重置实例选择；仅在新题不支持当前实例时再回退
                   setSelectedQuestion(id);
-                  setSelectedInstance(null);
                 }}
                 questions={questionsQuery.data}
                 loading={questionsQuery.isLoading}

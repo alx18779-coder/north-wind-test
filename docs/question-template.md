@@ -60,7 +60,14 @@ Q001,Top Suppliers,"列出所有提供了4种以上不同商品的供应商。",
 ## Import Workflow
 1. Administrator downloads the latest CSV or JSON template from the admin portal.
 2. Administrator populates the file, ensuring reference SQL aligns with engine capabilities.
-3. Upload file via Import Wizard → system runs validation rules.
-4. Administrator reviews preview table and resolves issues.
-5. Confirm import → records stored, audit log updated, summary emailed/notified.
-6. Failed rows can be exported for correction.
+3. Validate first: use “校验并预览” to run static checks (no data will be imported).
+   - Checks include: required fields, enums (difficulty/status), instance_tags existence, engine coverage of reference_sql.
+   - The preview lists per‑row errors. Fix them before importing.
+4. Upload/Import after validation → records stored, audit log updated, summary displayed.
+5. Failed rows can be exported for correction.
+
+### Validation details
+- difficulty: one of beginner/intermediate/advanced
+- status: draft or published
+- instance_tags: must reference existing instance tags configured in “数据库实例”
+- reference_sql: at least one entry; the set of engines must cover the engines of the referenced instance_tags present in the system
