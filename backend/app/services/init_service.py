@@ -18,6 +18,11 @@ def _script_paths_for_instance(instance: DatabaseInstance) -> Iterable[Path]:
     if instance.engine == "postgres":
         return [Path(settings.northwind_pg_script_path)]
     if instance.engine == "mysql":
+        # Prefer consolidated MySQL script converted from PG if present
+        consolidated = Path("infrastructure/sql/northwind_mysql.sql")
+        if consolidated.exists():
+            return [consolidated]
+        # Fallback to legacy split schema/data scripts
         return [
             Path(settings.northwind_mysql_schema_path),
             Path(settings.northwind_mysql_data_path),
