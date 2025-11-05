@@ -18,6 +18,8 @@ export default function QuestionDetail({ question, loading, selectedInstance }: 
   const [referenceSql, setReferenceSql] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [erOpen, setErOpen] = useState(false);
+  const [hintsOpen, setHintsOpen] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
   const erWrapperRef = useRef<HTMLDivElement | null>(null);
   const erOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const erDragRef = useRef<{ dragging: boolean; startX: number; startY: number; startOffsetX: number; startOffsetY: number } | null>(
@@ -117,19 +119,51 @@ export default function QuestionDetail({ question, loading, selectedInstance }: 
           )}
         </div>
         {question.hints.length > 0 && (
-          <div>
-            <h3 className="text-xs uppercase text-slate-400">提示</h3>
-            <ol className="mt-1 list-decimal space-y-1 pl-5 text-sm text-slate-300">
-              {question.hints.map((hint, index) => (
-                <li key={index}>{hint}</li>
-              ))}
-            </ol>
+          <div className="rounded border border-slate-800 bg-slate-900/40">
+            <button
+              className="flex w-full items-center justify-between px-3 py-2 text-left text-xs text-slate-300 hover:bg-slate-800/50"
+              onClick={() => setHintsOpen((v) => !v)}
+            >
+              <span className="inline-flex items-center gap-2">
+                <span
+                  className={
+                    "inline-block h-0 w-0 border-l-4 border-t-4 border-b-4 border-l-slate-300 border-t-transparent border-b-transparent transition-transform " +
+                    (hintsOpen ? "rotate-90" : "rotate-0")
+                  }
+                  aria-hidden
+                />
+                提示
+              </span>
+            </button>
+            {hintsOpen && (
+              <ol className="m-3 list-decimal space-y-1 pl-5 text-sm text-slate-300">
+                {question.hints.map((hint, index) => (
+                  <li key={index}>{hint}</li>
+                ))}
+              </ol>
+            )}
           </div>
         )}
         {question.notes && (
-          <div>
-            <h3 className="text-xs uppercase text-slate-400">备注</h3>
-            <p className="mt-1 text-sm text-slate-300">{question.notes}</p>
+          <div className="rounded border border-slate-800 bg-slate-900/40">
+            <button
+              className="flex w-full items-center justify-between px-3 py-2 text-left text-xs text-slate-300 hover:bg-slate-800/50"
+              onClick={() => setNotesOpen((v) => !v)}
+            >
+              <span className="inline-flex items-center gap-2">
+                <span
+                  className={
+                    "inline-block h-0 w-0 border-l-4 border-t-4 border-b-4 border-l-slate-300 border-t-transparent border-b-transparent transition-transform " +
+                    (notesOpen ? "rotate-90" : "rotate-0")
+                  }
+                  aria-hidden
+                />
+                备注
+              </span>
+            </button>
+            {notesOpen && (
+              <div className="m-3 text-sm text-slate-300">{question.notes}</div>
+            )}
           </div>
         )}
         <div className="rounded border border-slate-800 bg-slate-900/40">
