@@ -40,8 +40,42 @@ export default function PracticeWorkspace({ question, instanceTag, className }: 
     if (currentId && currentId !== prevId) {
       try {
         const saved = localStorage.getItem(`practice-sql-${currentId}`);
+        const normalizeHeader = (input: string) => {
+          if (!input) return input;
+          const lines = input.split(/\r?\n/);
+          for (let i = 0; i < Math.min(lines.length, 20); i++) {
+            const line = lines[i];
+            if (/^--\s*描述:\s*$/.test(line)) {
+              // 聚合后续以 "--" 开头的描述行，直到遇到空行或非注释
+              const descParts: string[] = [];
+              let j = i + 1;
+              while (j < lines.length) {
+                const l = lines[j];
+                if (/^--\s*(.*)$/.test(l)) {
+                  const m = l.match(/^--\s*(.*)$/);
+                  const text = (m?.[1] ?? "").trim();
+                  if (text.length > 0) descParts.push(text);
+                  j++;
+                  continue;
+                }
+                if (/^\s*$/.test(l)) {
+                  // 跳过空行但作为终止
+                  break;
+                }
+                break;
+              }
+              const merged = `-- 描述:${descParts.join(" ")}`;
+              // 用合并后的行替换原有多行
+              lines.splice(i, j - i, merged);
+              break;
+            }
+          }
+          return lines.join("\n");
+        };
         if (saved && saved.length > 0) {
-          setSql(saved);
+          const normalized = normalizeHeader(saved);
+          setSql(normalized);
+          try { localStorage.setItem(`practice-sql-${currentId}`, normalized); } catch {}
         } else if (question) {
           const lines: string[] = [];
           lines.push(`-- 题号: ${question.question_id}  标题: ${question.title}`);
@@ -50,7 +84,8 @@ export default function PracticeWorkspace({ question, instanceTag, className }: 
           }
           if (question.description) {
             const desc = question.description.replace(/\r?\n+/g, " ").trim();
-            lines.push(`-- 描述: ${desc}`);
+            // 按预期：冒号后不留空格
+            lines.push(`-- 描述:${desc}`);
           }
           lines.push("");
           setSql(lines.join("\n"));
