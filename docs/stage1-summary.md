@@ -5,6 +5,7 @@ This document aggregates Stage 1 outputs for the Northwind SQL practice platform
 ## Artifacts
 - `user-flows.md`: Anonymous learner and administrator journey maps plus information architecture.
 - `question-template.md`: Import schema, examples, and validation workflow.
+- `roadmap.md`: 后续开发路线（P0/P1/P2），含初始化稳健性、导入体验与工程化计划。
 - `api-spec.md`: Draft REST endpoints covering authentication, instance management, question bank, execution, and logging.
 - `ui-prototype-notes.md`: Layout guidance and interaction notes for practice and admin interfaces.
 - `security-strategy.md`: SQL guardrails, rate limiting, authentication, logging, and infrastructure safeguards.
