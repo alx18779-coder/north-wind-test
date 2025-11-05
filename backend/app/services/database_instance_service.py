@@ -83,7 +83,9 @@ def build_connection_url(instance: DatabaseInstance, password: str) -> str:
         port=instance.port,
         database=instance.database,
     )
-    return str(url)
+    # IMPORTANT: str(url) masks the password as '***'. Use render_as_string(hide_password=False)
+    # so the actual password is preserved in the DSN for the driver.
+    return url.render_as_string(hide_password=False)
 
 
 def create_execution_engine(url: str, timeout_seconds: int) -> Engine:
