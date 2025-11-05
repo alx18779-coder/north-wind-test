@@ -36,9 +36,10 @@ export default function QuestionList({ selectedId, onSelect, questions, loading,
           question.question_id.toLowerCase().includes(search.toLowerCase())
         : true;
       const matchesDifficulty = difficulty === "all" || question.difficulty === difficulty;
-      return matchesSearch && matchesDifficulty;
+      const matchesInstance = selectedInstance ? question.instance_tags.includes(selectedInstance) : true;
+      return matchesSearch && matchesDifficulty && matchesInstance;
     });
-  }, [questions, search, difficulty]);
+  }, [questions, search, difficulty, selectedInstance]);
 
   return (
     <div className="flex h-full flex-col rounded border border-slate-800 bg-slate-900">

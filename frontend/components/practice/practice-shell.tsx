@@ -26,6 +26,17 @@ export default function PracticeShell() {
       setSelectedInstance((prev) => prev ?? questionDetail.instance_tags[0]);
     }
   }, [questionDetail?.id]);
+
+  // 当切换实例标签时，如果当前选中题目不支持该标签，则自动切到首个符合条件的题目
+  useEffect(() => {
+    if (!selectedInstance || !questionsQuery.data) return;
+    const current = questionsQuery.data.find((q) => q.id === selectedQuestion);
+    if (current && current.instance_tags.includes(selectedInstance)) return;
+    const first = questionsQuery.data.find((q) => q.instance_tags.includes(selectedInstance));
+    if (first && first.id !== selectedQuestion) {
+      setSelectedQuestion(first.id);
+    }
+  }, [selectedInstance, questionsQuery.data, selectedQuestion]);
   const loadingInitial = questionsQuery.isLoading && !selectedQuestion;
   const noQuestions = !questionsQuery.isLoading && questionsQuery.data && questionsQuery.data.length === 0;
 
