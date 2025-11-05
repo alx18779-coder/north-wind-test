@@ -3688,7 +3688,7 @@ INSERT INTO us_states VALUES (51, 'Wyoming', 'WY', 'west');
 -- Name: pk_categories; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
-ALTER TABLE ONLY categories
+ALTER TABLE categories
     ADD CONSTRAINT pk_categories PRIMARY KEY (category_id);
 
 
@@ -3696,7 +3696,7 @@ ALTER TABLE ONLY categories
 -- Name: pk_customer_customer_demo; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
-ALTER TABLE ONLY customer_customer_demo
+ALTER TABLE customer_customer_demo
     ADD CONSTRAINT pk_customer_customer_demo PRIMARY KEY (customer_id, customer_type_id);
 
 
@@ -3704,7 +3704,7 @@ ALTER TABLE ONLY customer_customer_demo
 -- Name: pk_customer_demographics; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
-ALTER TABLE ONLY customer_demographics
+ALTER TABLE customer_demographics
     ADD CONSTRAINT pk_customer_demographics PRIMARY KEY (customer_type_id);
 
 
@@ -3712,7 +3712,7 @@ ALTER TABLE ONLY customer_demographics
 -- Name: pk_customers; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
-ALTER TABLE ONLY customers
+ALTER TABLE customers
     ADD CONSTRAINT pk_customers PRIMARY KEY (customer_id);
 
 
@@ -3720,7 +3720,7 @@ ALTER TABLE ONLY customers
 -- Name: pk_employees; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
-ALTER TABLE ONLY employees
+ALTER TABLE employees
     ADD CONSTRAINT pk_employees PRIMARY KEY (employee_id);
 
 
@@ -3728,7 +3728,7 @@ ALTER TABLE ONLY employees
 -- Name: pk_employee_territories; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
-ALTER TABLE ONLY employee_territories
+ALTER TABLE employee_territories
     ADD CONSTRAINT pk_employee_territories PRIMARY KEY (employee_id, territory_id);
 
 
@@ -3736,7 +3736,7 @@ ALTER TABLE ONLY employee_territories
 -- Name: pk_order_details; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
-ALTER TABLE ONLY order_details
+ALTER TABLE order_details
     ADD CONSTRAINT pk_order_details PRIMARY KEY (order_id, product_id);
 
 
@@ -3744,7 +3744,7 @@ ALTER TABLE ONLY order_details
 -- Name: pk_orders; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
-ALTER TABLE ONLY orders
+ALTER TABLE orders
     ADD CONSTRAINT pk_orders PRIMARY KEY (order_id);
 
 
@@ -3752,7 +3752,7 @@ ALTER TABLE ONLY orders
 -- Name: pk_products; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
-ALTER TABLE ONLY products
+ALTER TABLE products
     ADD CONSTRAINT pk_products PRIMARY KEY (product_id);
 
 
@@ -3760,7 +3760,7 @@ ALTER TABLE ONLY products
 -- Name: pk_region; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
-ALTER TABLE ONLY region
+ALTER TABLE region
     ADD CONSTRAINT pk_region PRIMARY KEY (region_id);
 
 
@@ -3768,7 +3768,7 @@ ALTER TABLE ONLY region
 -- Name: pk_shippers; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
-ALTER TABLE ONLY shippers
+ALTER TABLE shippers
     ADD CONSTRAINT pk_shippers PRIMARY KEY (shipper_id);
 
 
@@ -3776,7 +3776,7 @@ ALTER TABLE ONLY shippers
 -- Name: pk_suppliers; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
-ALTER TABLE ONLY suppliers
+ALTER TABLE suppliers
     ADD CONSTRAINT pk_suppliers PRIMARY KEY (supplier_id);
 
 
@@ -3784,7 +3784,7 @@ ALTER TABLE ONLY suppliers
 -- Name: pk_territories; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
-ALTER TABLE ONLY territories
+ALTER TABLE territories
     ADD CONSTRAINT pk_territories PRIMARY KEY (territory_id);
 
 
@@ -3792,7 +3792,7 @@ ALTER TABLE ONLY territories
 -- Name: pk_usstates; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
-ALTER TABLE ONLY us_states
+ALTER TABLE us_states
     ADD CONSTRAINT pk_usstates PRIMARY KEY (state_id);
 
 
@@ -3800,104 +3800,104 @@ ALTER TABLE ONLY us_states
 -- Name: fk_orders_customers; Type: Constraint; Schema: -; Owner: -
 --
 
-ALTER TABLE ONLY orders
-    ADD CONSTRAINT fk_orders_customers FOREIGN KEY (customer_id) REFERENCES customers;
+ALTER TABLE orders
+    ADD CONSTRAINT fk_orders_customers FOREIGN KEY (customer_id) REFERENCES customers (customer_id);
 
 
 --
 -- Name: fk_orders_employees; Type: Constraint; Schema: -; Owner: -
 --
 
-ALTER TABLE ONLY orders
-    ADD CONSTRAINT fk_orders_employees FOREIGN KEY (employee_id) REFERENCES employees;
+ALTER TABLE orders
+    ADD CONSTRAINT fk_orders_employees FOREIGN KEY (employee_id) REFERENCES employees (employee_id);
 
 
 --
 -- Name: fk_orders_shippers; Type: Constraint; Schema: -; Owner: -
 --
 
-ALTER TABLE ONLY orders
-    ADD CONSTRAINT fk_orders_shippers FOREIGN KEY (ship_via) REFERENCES shippers;
+ALTER TABLE orders
+    ADD CONSTRAINT fk_orders_shippers FOREIGN KEY (ship_via) REFERENCES shippers (shipper_id);
 
 
 --
 -- Name: fk_order_details_products; Type: Constraint; Schema: -; Owner: -
 --
 
-ALTER TABLE ONLY order_details
-    ADD CONSTRAINT fk_order_details_products FOREIGN KEY (product_id) REFERENCES products;
+ALTER TABLE order_details
+    ADD CONSTRAINT fk_order_details_products FOREIGN KEY (product_id) REFERENCES products (product_id);
 
 
 --
 -- Name: fk_order_details_orders; Type: Constraint; Schema: -; Owner: -
 --
 
-ALTER TABLE ONLY order_details
-    ADD CONSTRAINT fk_order_details_orders FOREIGN KEY (order_id) REFERENCES orders;
+ALTER TABLE order_details
+    ADD CONSTRAINT fk_order_details_orders FOREIGN KEY (order_id) REFERENCES orders (order_id);
 
 
 --
 -- Name: fk_products_categories; Type: Constraint; Schema: -; Owner: -
 --
 
-ALTER TABLE ONLY products
-    ADD CONSTRAINT fk_products_categories FOREIGN KEY (category_id) REFERENCES categories;
+ALTER TABLE products
+    ADD CONSTRAINT fk_products_categories FOREIGN KEY (category_id) REFERENCES categories (category_id);
 
 
 --
 -- Name: fk_products_suppliers; Type: Constraint; Schema: -; Owner: -
 --
 
-ALTER TABLE ONLY products
-    ADD CONSTRAINT fk_products_suppliers FOREIGN KEY (supplier_id) REFERENCES suppliers;
+ALTER TABLE products
+    ADD CONSTRAINT fk_products_suppliers FOREIGN KEY (supplier_id) REFERENCES suppliers (supplier_id);
 
 
 --
 -- Name: fk_territories_region; Type: Constraint; Schema: -; Owner: -
 --
 
-ALTER TABLE ONLY territories
-    ADD CONSTRAINT fk_territories_region FOREIGN KEY (region_id) REFERENCES region;
+ALTER TABLE territories
+    ADD CONSTRAINT fk_territories_region FOREIGN KEY (region_id) REFERENCES region (region_id);
 
 
 --
 -- Name: fk_employee_territories_territories; Type: Constraint; Schema: -; Owner: -
 --
 
-ALTER TABLE ONLY employee_territories
-    ADD CONSTRAINT fk_employee_territories_territories FOREIGN KEY (territory_id) REFERENCES territories;
+ALTER TABLE employee_territories
+    ADD CONSTRAINT fk_employee_territories_territories FOREIGN KEY (territory_id) REFERENCES territories (territory_id);
 
 
 --
 -- Name: fk_employee_territories_employees; Type: Constraint; Schema: -; Owner: -
 --
 
-ALTER TABLE ONLY employee_territories
-    ADD CONSTRAINT fk_employee_territories_employees FOREIGN KEY (employee_id) REFERENCES employees;
+ALTER TABLE employee_territories
+    ADD CONSTRAINT fk_employee_territories_employees FOREIGN KEY (employee_id) REFERENCES employees (employee_id);
 
 
 --
 -- Name: fk_customer_customer_demo_customer_demographics; Type: Constraint; Schema: -; Owner: -
 --
 
-ALTER TABLE ONLY customer_customer_demo
-    ADD CONSTRAINT fk_customer_customer_demo_customer_demographics FOREIGN KEY (customer_type_id) REFERENCES customer_demographics;
+ALTER TABLE customer_customer_demo
+    ADD CONSTRAINT fk_customer_customer_demo_customer_demographics FOREIGN KEY (customer_type_id) REFERENCES customer_demographics (customer_type_id);
 
 
 --
 -- Name: fk_customer_customer_demo_customers; Type: Constraint; Schema: -; Owner: -
 --
 
-ALTER TABLE ONLY customer_customer_demo
-    ADD CONSTRAINT fk_customer_customer_demo_customers FOREIGN KEY (customer_id) REFERENCES customers;
+ALTER TABLE customer_customer_demo
+    ADD CONSTRAINT fk_customer_customer_demo_customers FOREIGN KEY (customer_id) REFERENCES customers (customer_id);
 
 
 --
 -- Name: fk_employees_employees; Type: Constraint; Schema: -; Owner: -
 --
 
-ALTER TABLE ONLY employees
-    ADD CONSTRAINT fk_employees_employees FOREIGN KEY (reports_to) REFERENCES employees;
+ALTER TABLE employees
+    ADD CONSTRAINT fk_employees_employees FOREIGN KEY (reports_to) REFERENCES employees (employee_id);
 
     
 --
