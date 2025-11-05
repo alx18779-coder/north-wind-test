@@ -36,14 +36,112 @@ def _ensure_scripts_exist(paths: Iterable[Path]) -> None:
         raise FileNotFoundError("Missing initialization scripts: " + ", ".join(missing))
 
 
-def _run_scripts(connection_url: str, paths: Iterable[Path]) -> None:
+def _split_sql_statements(sql: str) -> list[str]:
+    """Split SQL script into individual statements, respecting strings and comments.
+
+    Handles:
+    - Single-line comments: -- ... and # ...
+    - Block comments: /* ... */
+    - String literals: '...' and "..." (no dollar-quoting as not used here)
+    """
+    stmts: list[str] = []
+    buf: list[str] = []
+    i = 0
+    n = len(sql)
+    in_single = False
+    in_double = False
+    in_line_comment = False
+    in_block_comment = False
+    while i < n:
+        ch = sql[i]
+        nxt = sql[i + 1] if i + 1 < n else ''
+        # Handle exiting comments
+        if in_line_comment:
+            if ch == '\n':
+                in_line_comment = False
+                buf.append(ch)
+            i += 1
+            continue
+        if in_block_comment:
+            if ch == '*' and nxt == '/':
+                i += 2
+                in_block_comment = False
+            else:
+                i += 1
+            continue
+        # Enter comments (only when not in string)
+        if not in_single and not in_double:
+            if ch == '-' and nxt == '-':
+                in_line_comment = True
+                # skip the rest of the line
+                i += 2
+                # normalize MySQL requirement: '-- ' has a space; keep comment but do not include in statement buffer
+                while i < n and sql[i] != '\n':
+                    i += 1
+                continue
+            if ch == '#':
+                in_line_comment = True
+                i += 1
+                while i < n and sql[i] != '\n':
+                    i += 1
+                continue
+            if ch == '/' and nxt == '*':
+                in_block_comment = True
+                i += 2
+                continue
+        # Strings
+        if ch == "'" and not in_double:
+            in_single = not in_single
+            buf.append(ch)
+            i += 1
+            continue
+        if ch == '"' and not in_single:
+            in_double = not in_double
+            buf.append(ch)
+            i += 1
+            continue
+        # Statement terminator
+        if ch == ';' and not in_single and not in_double:
+            stmt = ''.join(buf).strip()
+            if stmt:
+                stmts.append(stmt)
+            buf = []
+            i += 1
+            continue
+        buf.append(ch)
+        i += 1
+    last = ''.join(buf).strip()
+    if last:
+        stmts.append(last)
+    return stmts
+
+
+def _normalize_for_mysql(sql: str) -> str:
+    # Drop lines that start with '---' (PG dump separators) or convert to MySQL style comments
+    lines: list[str] = []
+    for raw in sql.splitlines():
+        s = raw.lstrip()
+        if s.startswith('---'):
+            # replace with MySQL comment
+            lines.append('# ' + s.lstrip('-').lstrip())
+            continue
+        lines.append(raw)
+    return '\n'.join(lines)
+
+
+def _run_scripts(connection_url: str, paths: Iterable[Path], engine_name: str) -> None:
     engine = create_execution_engine(connection_url, timeout_seconds=settings.default_timeout_seconds)
     try:
         with engine.begin() as conn:
             for path in paths:
                 sql = path.read_text(encoding="utf-8")
-                if sql.strip():
-                    conn.exec_driver_sql(sql)
+                if engine_name == "mysql":
+                    sql = _normalize_for_mysql(sql)
+                    for stmt in _split_sql_statements(sql):
+                        conn.exec_driver_sql(stmt)
+                else:
+                    if sql.strip():
+                        conn.exec_driver_sql(sql)
     finally:
         engine.dispose()
 
@@ -61,7 +159,7 @@ def _execute_job(session: Session, job: DbInitJob, instance: DatabaseInstance) -
     _ensure_scripts_exist(scripts)
     password = crypto.decrypt(instance.password_encrypted)
     connection_url = build_connection_url(instance, password)
-    _run_scripts(connection_url, scripts)
+    _run_scripts(connection_url, scripts, instance.engine)
 
 
 def run_init_job(session: Session, job: DbInitJob) -> DbInitJob:
