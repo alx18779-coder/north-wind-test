@@ -5,7 +5,7 @@ from typing import List
 
 from sqlalchemy import select, text as sa_text
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.engine import Engine, create_engine
+from sqlalchemy.engine import Engine, URL, create_engine
 from sqlalchemy.orm import Session
 
 from backend.app.core import crypto
@@ -63,13 +63,27 @@ def delete_instance(session: Session, instance: DatabaseInstance) -> None:
 
 
 def build_connection_url(instance: DatabaseInstance, password: str) -> str:
+    """Build a SQLAlchemy URL with proper escaping for special characters.
+
+    Avoid manual string interpolation to prevent DSN breakage when username/password
+    contain special characters like @/:#?.
+    """
     if instance.engine == "postgres":
         driver = "postgresql+psycopg"
     elif instance.engine == "mysql":
         driver = "mysql+pymysql"
     else:  # pragma: no cover - guarded by schema validation
         raise ValueError(f"Unsupported engine: {instance.engine}")
-    return f"{driver}://{instance.username}:{password}@{instance.host}:{instance.port}/{instance.database}"
+
+    url = URL.create(
+        drivername=driver,
+        username=instance.username,
+        password=password,
+        host=instance.host,
+        port=instance.port,
+        database=instance.database,
+    )
+    return str(url)
 
 
 def create_execution_engine(url: str, timeout_seconds: int) -> Engine:
