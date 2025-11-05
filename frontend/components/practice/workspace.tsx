@@ -134,73 +134,136 @@ export default function PracticeWorkspace({ question, instanceTag, className }: 
     .filter(Boolean)
     .join(" ");
 
-  // 轻量 SQL 美化：不依赖外部库，尽量保持注释与字符串
+  // 轻量 SQL 美化：不依赖外部库，且严格保留注释原样
   const formatSql = (input: string) => {
     const text = input ?? "";
     if (!text.trim()) return text;
-    // 1) 提取字符串字面量，避免误处理
-    const placeholders: string[] = [];
-    let tmp = "";
+
+    // 0) 将内容切分为 [code/comment] 段，注释段保持原样
+    type Seg = { type: "code" | "comment"; v: string };
+    const segs: Seg[] = [];
+    let buf = "";
     let i = 0;
+    let inStr: '"' | "'" | null = null;
     while (i < text.length) {
       const ch = text[i];
-      if (ch === "'" || ch === '"') {
-        const quote = ch;
-        let j = i + 1;
-        let buf = quote;
-        while (j < text.length) {
-          const c = text[j];
-          buf += c;
-          if (c === quote && text[j - 1] !== "\\") {
-            j++;
-            break;
-          }
-          j++;
+      const next = text[i + 1];
+      // 字符串边界（处理简单转义）
+      if (!inStr && (ch === '"' || ch === "'")) {
+        inStr = ch;
+        buf += ch;
+        i++;
+        continue;
+      }
+      if (inStr) {
+        buf += ch;
+        if (ch === inStr && text[i - 1] !== "\\") {
+          inStr = null;
         }
-        const index = placeholders.push(buf) - 1;
-        tmp += `__Q${index}__`;
+        i++;
+        continue;
+      }
+      // 行注释 -- ...\n
+      if (ch === "-" && next === "-") {
+        if (buf) segs.push({ type: "code", v: buf });
+        buf = "";
+        // 收集整行注释
+        let j = i;
+        while (j < text.length && text[j] !== "\n") j++;
+        const comment = text.slice(i, j) + (j < text.length ? "\n" : "");
+        segs.push({ type: "comment", v: comment });
+        i = j + 1;
+        continue;
+      }
+      // 块注释 /* ... */
+      if (ch === "/" && next === "*") {
+        if (buf) segs.push({ type: "code", v: buf });
+        buf = "";
+        let j = i + 2;
+        while (j < text.length && !(text[j] === "*" && text[j + 1] === "/")) j++;
+        j = Math.min(text.length, j + 2);
+        const comment = text.slice(i, j);
+        segs.push({ type: "comment", v: comment });
         i = j;
         continue;
       }
-      tmp += ch;
+      buf += ch;
       i++;
     }
-    // 2) 统一空白并大写关键字
-    let s = tmp.replace(/[\t\r\n]+/g, " ").replace(/\s+/g, " ");
-    const keywords = [
-      "SELECT","FROM","WHERE","GROUP BY","ORDER BY","HAVING","LIMIT","OFFSET",
-      "UNION ALL","UNION","INNER JOIN","LEFT JOIN","RIGHT JOIN","FULL JOIN","JOIN","ON"
-    ];
-    // 先匹配多词关键字
-    keywords.sort((a,b)=>b.length-a.length).forEach(kw => {
-      const re = new RegExp(`\\b${kw.replace(/ /g, "\\s+")}\\b`, "gi");
-      s = s.replace(re, kw);
-    });
-    // 3) 在主要子句前换行
-    s = s
-      .replace(/\s+(UNION ALL|UNION)\b/g, "\n$1")
-      .replace(/\s+(FROM|WHERE|GROUP BY|ORDER BY|HAVING|LIMIT|OFFSET)\b/g, "\n$1")
-      .replace(/\s+((?:INNER|LEFT|RIGHT|FULL) JOIN|JOIN)\b/g, "\n$1")
-      .replace(/\s+ON\b/g, "\n  ON");
-    // 4) 逗号换行（影响 SELECT/GROUP BY/ORDER BY 列表，可能略显激进）
-    s = s.replace(/,\s*/g, ",\n  ");
-    // 5) 按括号缩进
-    const lines = s.split(/\n/);
-    let depth = 0;
-    const out: string[] = [];
-    for (const raw of lines) {
-      const trimmed = raw.trim();
-      const dec = (trimmed.match(/[)\]]/g) || []).length;
-      const inc = (trimmed.match(/[(\[]/g) || []).length;
-      // 在包含右括号的行先减少缩进
-      const currentDepth = Math.max(0, depth - dec);
-      out.push("  ".repeat(currentDepth) + trimmed);
-      depth = Math.max(0, currentDepth + inc);
-    }
-    let result = out.join("\n");
-    // 6) 还原字符串字面量
-    result = result.replace(/__Q(\d+)__/g, (_, idx) => placeholders[Number(idx)] ?? "");
-    return result.trim();
+    if (buf) segs.push({ type: "code", v: buf });
+
+    const formatCode = (code: string) => {
+      // 1) 保护字符串字面量
+      const placeholders: string[] = [];
+      let tmp = "";
+      let k = 0;
+      let q: '"' | "'" | null = null;
+      while (k < code.length) {
+        const c = code[k];
+        if (!q && (c === '"' || c === "'")) {
+          q = c;
+          let j = k + 1;
+          let bufq = c;
+          while (j < code.length) {
+            const cc = code[j];
+            bufq += cc;
+            if (cc === q && code[j - 1] !== "\\") {
+              j++;
+              break;
+            }
+            j++;
+          }
+          const idx = placeholders.push(bufq) - 1;
+          tmp += `__Q${idx}__`;
+          k = j;
+          continue;
+        }
+        tmp += c;
+        k++;
+      }
+
+      // 2) 统一空白（不跨越我们切分的注释边界）
+      let s = tmp.replace(/[\t\r\n]+/g, " ").replace(/\s+/g, " ");
+
+      const keywords = [
+        "SELECT","FROM","WHERE","GROUP BY","ORDER BY","HAVING","LIMIT","OFFSET",
+        "UNION ALL","UNION","INNER JOIN","LEFT JOIN","RIGHT JOIN","FULL JOIN","JOIN","ON"
+      ];
+      keywords.sort((a,b)=>b.length-a.length).forEach(kw => {
+        const re = new RegExp(`\\b${kw.replace(/ /g, "\\s+")}\\b`, "gi");
+        s = s.replace(re, kw);
+      });
+
+      // 3) 子句换行
+      s = s
+        .replace(/\s+(UNION ALL|UNION)\b/g, "\n$1")
+        .replace(/\s+(FROM|WHERE|GROUP BY|ORDER BY|HAVING|LIMIT|OFFSET)\b/g, "\n$1")
+        .replace(/\s+((?:INNER|LEFT|RIGHT|FULL) JOIN|JOIN)\b/g, "\n$1")
+        .replace(/\s+ON\b/g, "\n  ON");
+
+      // 4) 逗号换行
+      s = s.replace(/,\s*/g, ",\n  ");
+
+      // 5) 括号缩进
+      const lines = s.split(/\n/);
+      let depth = 0;
+      const out: string[] = [];
+      for (const raw of lines) {
+        const trimmed = raw.trim();
+        const dec = (trimmed.match(/[)\]]/g) || []).length;
+        const inc = (trimmed.match(/[(\[]/g) || []).length;
+        const currentDepth = Math.max(0, depth - dec);
+        out.push("  ".repeat(currentDepth) + trimmed);
+        depth = Math.max(0, currentDepth + inc);
+      }
+      let result = out.join("\n");
+      result = result.replace(/__Q(\d+)__/g, (_, idx) => placeholders[Number(idx)] ?? "");
+      return result;
+    };
+
+    // 逐段处理：注释原样拼接，代码段格式化
+    const parts = segs.map((seg) => (seg.type === "comment" ? seg.v : formatCode(seg.v)));
+    return parts.join("").trim();
   };
 
   return (
