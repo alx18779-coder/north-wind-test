@@ -90,6 +90,16 @@ export default function InstanceDetail({ instanceId }: Props) {
   };
 
   const jobs = initJobsQuery.data ?? [];
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
+  const toggleExpand = (id: number) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+  const copyText = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.showSuccess("已复制到剪贴板");
+    } catch {
+      toast.showError("复制失败");
+    }
+  };
   const activeJob = jobs.find((job) => job.status === "queued" || job.status === "running");
   const jobStatusMap: Record<string, string> = {
     queued: "排队中",
@@ -192,7 +202,38 @@ export default function InstanceDetail({ instanceId }: Props) {
                   <span>{jobStatusMap[job.status] ?? job.status}</span>
                   <span>{new Date(job.created_at).toLocaleString()}</span>
                 </div>
-                {job.log && <div className="mt-1 text-slate-400">{job.log}</div>}
+                {job.log && (
+                  <div className="mt-1 text-slate-400">
+                    {(() => {
+                      const isLong = job.log.length > 800;
+                      const isOpen = expanded[job.id] || false;
+                      const display = isLong && !isOpen ? job.log.slice(0, 800) + "\n…(已截断，点击展开查看全部)" : job.log;
+                      return (
+                        <div>
+                          <pre className="max-h-60 overflow-auto whitespace-pre-wrap break-words rounded border border-slate-800 bg-slate-950 p-2 text-[11px] text-slate-300">
+                            {display}
+                          </pre>
+                          <div className="mt-1 flex gap-2">
+                            {isLong && (
+                              <button
+                                onClick={() => toggleExpand(job.id)}
+                                className="rounded border border-slate-700 px-2 py-1 text-[11px] text-slate-200 hover:bg-slate-800"
+                              >
+                                {isOpen ? "收起" : "展开"}
+                              </button>
+                            )}
+                            <button
+                              onClick={() => copyText(job.log)}
+                              className="rounded border border-slate-700 px-2 py-1 text-[11px] text-slate-200 hover:bg-slate-800"
+                            >
+                              复制全部
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
               </li>
             ))}
           </ul>
