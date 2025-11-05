@@ -18,7 +18,8 @@ export default function SqlEditor({ value, onChange, disabled }: Props) {
       readOnly: disabled,
       fontSize: 13,
       automaticLayout: true,
-      wordWrap: "on" as const,
+      // 关闭自动换行，避免注释视觉换行
+      wordWrap: "off" as const,
       ariaLabel: "SQL 编辑器",
     }),
     [disabled]

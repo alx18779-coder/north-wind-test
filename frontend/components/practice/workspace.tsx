@@ -49,10 +49,8 @@ export default function PracticeWorkspace({ question, instanceTag, className }: 
             lines.push(`-- 期望字段: ${question.required_fields}`);
           }
           if (question.description) {
-            lines.push(`-- 描述:`);
-            for (const l of question.description.split("\n")) {
-              lines.push(`-- ${l}`);
-            }
+            const desc = question.description.replace(/\r?\n+/g, " ").trim();
+            lines.push(`-- 描述: ${desc}`);
           }
           lines.push("");
           setSql(lines.join("\n"));
