@@ -18,15 +18,17 @@ export default function SqlEditor({ value, onChange, disabled }: Props) {
       readOnly: disabled,
       fontSize: 13,
       automaticLayout: true,
-      // 关闭自动换行，避免注释视觉换行
       wordWrap: "off" as const,
+      wrappingStrategy: "advanced" as const,
+      scrollBeyondLastColumn: 8,
+      scrollbar: { horizontal: "visible" as const },
       ariaLabel: "SQL 编辑器",
     }),
     [disabled]
   );
 
   return (
-    <div className="rounded border border-slate-700 bg-slate-950">
+    <div className="rounded border border-slate-700 bg-slate-950 overflow-x-auto">
       <MonacoEditor
         height="220px"
         defaultLanguage="sql"
