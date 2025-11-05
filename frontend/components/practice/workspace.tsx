@@ -134,17 +134,96 @@ export default function PracticeWorkspace({ question, instanceTag, className }: 
     .filter(Boolean)
     .join(" ");
 
+  // 轻量 SQL 美化：不依赖外部库，尽量保持注释与字符串
+  const formatSql = (input: string) => {
+    const text = input ?? "";
+    if (!text.trim()) return text;
+    // 1) 提取字符串字面量，避免误处理
+    const placeholders: string[] = [];
+    let tmp = "";
+    let i = 0;
+    while (i < text.length) {
+      const ch = text[i];
+      if (ch === "'" || ch === '"') {
+        const quote = ch;
+        let j = i + 1;
+        let buf = quote;
+        while (j < text.length) {
+          const c = text[j];
+          buf += c;
+          if (c === quote && text[j - 1] !== "\\") {
+            j++;
+            break;
+          }
+          j++;
+        }
+        const index = placeholders.push(buf) - 1;
+        tmp += `__Q${index}__`;
+        i = j;
+        continue;
+      }
+      tmp += ch;
+      i++;
+    }
+    // 2) 统一空白并大写关键字
+    let s = tmp.replace(/[\t\r\n]+/g, " ").replace(/\s+/g, " ");
+    const keywords = [
+      "SELECT","FROM","WHERE","GROUP BY","ORDER BY","HAVING","LIMIT","OFFSET",
+      "UNION ALL","UNION","INNER JOIN","LEFT JOIN","RIGHT JOIN","FULL JOIN","JOIN","ON"
+    ];
+    // 先匹配多词关键字
+    keywords.sort((a,b)=>b.length-a.length).forEach(kw => {
+      const re = new RegExp(`\\b${kw.replace(/ /g, "\\s+")}\\b`, "gi");
+      s = s.replace(re, kw);
+    });
+    // 3) 在主要子句前换行
+    s = s
+      .replace(/\s+(UNION ALL|UNION)\b/g, "\n$1")
+      .replace(/\s+(FROM|WHERE|GROUP BY|ORDER BY|HAVING|LIMIT|OFFSET)\b/g, "\n$1")
+      .replace(/\s+((?:INNER|LEFT|RIGHT|FULL) JOIN|JOIN)\b/g, "\n$1")
+      .replace(/\s+ON\b/g, "\n  ON");
+    // 4) 逗号换行（影响 SELECT/GROUP BY/ORDER BY 列表，可能略显激进）
+    s = s.replace(/,\s*/g, ",\n  ");
+    // 5) 按括号缩进
+    const lines = s.split(/\n/);
+    let depth = 0;
+    const out: string[] = [];
+    for (const raw of lines) {
+      const trimmed = raw.trim();
+      const dec = (trimmed.match(/[)\]]/g) || []).length;
+      const inc = (trimmed.match(/[(\[]/g) || []).length;
+      // 在包含右括号的行先减少缩进
+      const currentDepth = Math.max(0, depth - dec);
+      out.push("  ".repeat(currentDepth) + trimmed);
+      depth = Math.max(0, currentDepth + inc);
+    }
+    let result = out.join("\n");
+    // 6) 还原字符串字面量
+    result = result.replace(/__Q(\d+)__/g, (_, idx) => placeholders[Number(idx)] ?? "");
+    return result.trim();
+  };
+
   return (
     <section className={containerClassName}>
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-100">SQL 工作台</h2>
-        <button
-          onClick={handleRun}
-          disabled={executeMutation.isPending || !question}
-          className="rounded bg-emerald-500 px-4 py-2 text-sm font-medium text-emerald-950 hover:bg-emerald-400 disabled:cursor-not-allowed"
-        >
-          {executeMutation.isPending ? "执行中..." : "执行查询"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setSql((prev) => formatSql(prev))}
+            disabled={!question}
+            className="rounded border border-slate-600 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed"
+            title="美化 SQL（试验性）"
+          >
+            美化 SQL
+          </button>
+          <button
+            onClick={handleRun}
+            disabled={executeMutation.isPending || !question}
+            className="rounded bg-emerald-500 px-4 py-2 text-sm font-medium text-emerald-950 hover:bg-emerald-400 disabled:cursor-not-allowed"
+          >
+            {executeMutation.isPending ? "执行中..." : "执行查询"}
+          </button>
+        </div>
       </div>
       <SqlEditor value={sql} onChange={setSql} disabled={!question} />
       {error && <div className="mt-3 rounded border border-rose-700 bg-rose-950 px-3 py-2 text-xs text-rose-200">{error}</div>}
