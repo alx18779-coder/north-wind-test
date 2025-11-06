@@ -24,7 +24,8 @@ export default function PracticeShell() {
 useEffect(() => {
   if (!questionDetail || questionDetail.instance_tags.length === 0) return;
   setSelectedInstance((prev) => {
-    if (!prev) return questionDetail.instance_tags[0] ?? null;
+    // 若当前为“全部实例”（null），保持不变；否则仅在当前实例不再受支持时回退到该题首个实例
+    if (prev === null) return prev;
     return questionDetail.instance_tags.includes(prev) ? prev : (questionDetail.instance_tags[0] ?? null);
   });
 }, [questionDetail?.id]);
