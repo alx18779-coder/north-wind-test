@@ -45,14 +45,10 @@ export default function InstanceDetail({ instanceId }: Props) {
     }
   }, [initMutation.isSuccess, initMutation.isError]);
 
-  if (detailQuery.isLoading) {
-    return <div className="text-sm text-slate-400">正在加载实例...</div>;
-  }
-
-  if (detailQuery.isError || !detailQuery.data) {
-    return <div className="text-sm text-rose-300">未找到该实例。</div>;
-  }
-
+  // 避免在 hooks 声明之后再出现早退 return，
+  // 统一在渲染时根据状态选择内容，以防开发模式下出现 Hooks 次序不一致。
+  const isLoading = detailQuery.isLoading;
+  const hasError = detailQuery.isError || !detailQuery.data;
   const instance = detailQuery.data;
   const isBusy = updateMutation.isPending || deleteMutation.isPending || testMutation.isPending || initMutation.isPending;
 
@@ -90,11 +86,11 @@ export default function InstanceDetail({ instanceId }: Props) {
   };
 
   const jobs = initJobsQuery.data ?? [];
-  // 使用字符串键以避免 TS 对 number 索引的约束告警
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  // 使用数字数组跟踪展开记录，避免非可序列化状态(Set/Map)
+  const defaultExpandedIds: number[] = [];
+  const [expandedIds, setExpandedIds] = useState(defaultExpandedIds);
   const toggleExpand = (id: number) => {
-    const key = String(id);
-    setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+    setExpandedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
   const copyText = async (text: string) => {
     try {
@@ -113,8 +109,14 @@ export default function InstanceDetail({ instanceId }: Props) {
     cancelled: "已取消",
   };
 
-  return (
-    <div className="space-y-6">
+  let mainContent: JSX.Element | null = null;
+  if (isLoading) {
+    mainContent = <div className="text-sm text-slate-400">正在加载实例...</div>;
+  } else if (hasError || !instance) {
+    mainContent = <div className="text-sm text-rose-300">未找到该实例。</div>;
+  } else {
+    mainContent = (
+      <>
       <section className="rounded border border-slate-800 bg-slate-900 p-4">
         <h2 className="text-sm font-semibold text-slate-100">连接信息</h2>
         <dl className="mt-3 grid grid-cols-1 gap-3 text-xs text-slate-300 md:grid-cols-2">
@@ -210,7 +212,7 @@ export default function InstanceDetail({ instanceId }: Props) {
                   <div className="mt-1 text-slate-400">
                     {(() => {
                       const isLong = job.log.length > 800;
-                      const isOpen = expanded[String(job.id)] || false;
+                      const isOpen = expandedIds.includes(job.id);
                       const display = isLong && !isOpen ? job.log.slice(0, 800) + "\n…(已截断，点击展开查看全部)" : job.log;
                       return (
                         <div>
@@ -264,6 +266,9 @@ export default function InstanceDetail({ instanceId }: Props) {
           </button>
         </div>
       </section>
-    </div>
-  );
+      </>
+    );
+  }
+
+  return <div className="space-y-6">{mainContent}</div>;
 }

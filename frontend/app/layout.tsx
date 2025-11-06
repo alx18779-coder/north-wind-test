@@ -9,6 +9,9 @@ import ToastProvider from "../components/common/toast-provider";
 export const metadata: Metadata = {
   title: "Northwind SQL Trainer",
   description: "Practice SQL queries against curated exercises",
+  icons: {
+    icon: "/er-northwind.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
