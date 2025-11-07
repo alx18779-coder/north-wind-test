@@ -1,0 +1,55 @@
+services:
+  app_db:
+    image: postgres:15
+    container_name: app_db
+    environment:
+      POSTGRES_DB: appdb
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+    volumes:
+      - app_db_data:/var/lib/postgresql/data
+    networks: [app_net]
+
+  backend:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.backend
+    image: northwind/backend:prod
+    container_name: backend
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-prod}
+      SECRET_KEY: ${SECRET_KEY:-change-me}
+      JWT_SECRET: ${JWT_SECRET:-change-me-too}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-change-me-encrypt}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://app:app@app_db:5432/appdb}
+      ALLOWED_CORS_ORIGINS: ${ALLOWED_CORS_ORIGINS:-["http://localhost:3000"]}
+      DEFAULT_TIMEOUT_SECONDS: ${DEFAULT_TIMEOUT_SECONDS:-6}
+      DEFAULT_MAX_ROWS: ${DEFAULT_MAX_ROWS:-1000}
+      DEFAULT_CONCURRENCY_LIMIT: ${DEFAULT_CONCURRENCY_LIMIT:-5}
+      DEFAULT_RATE_LIMIT_PER_MINUTE: ${DEFAULT_RATE_LIMIT_PER_MINUTE:-30}
+    ports:
+      - "10000:10000"
+    depends_on: [app_db]
+    networks: [app_net]
+
+  frontend:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.frontend
+    image: northwind/frontend:prod
+    container_name: frontend
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: /api
+      NEXT_API_PROXY_TARGET: http://backend:10000/api
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    depends_on: [backend]
+    networks: [app_net]
+
+volumes:
+  app_db_data:
+
+networks:
+  app_net:
+

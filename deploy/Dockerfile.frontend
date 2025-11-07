@@ -20,6 +20,11 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
     PNPM_HOME="/pnpm" \
     PATH="/pnpm:$PATH"
 RUN pnpm config set store-dir /pnpm/store
+# 可选构建参数：覆盖构建期环境，用于 Next 重写代理/公开基址
+ARG NEXT_API_PROXY_TARGET
+ARG NEXT_PUBLIC_API_BASE_URL
+ENV NEXT_API_PROXY_TARGET=${NEXT_API_PROXY_TARGET}
+ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
 COPY --from=deps /pnpm/store /pnpm/store
 COPY frontend/ ./
 # 生产构建：构建阶段需要 devDependencies（tailwind/postcss）

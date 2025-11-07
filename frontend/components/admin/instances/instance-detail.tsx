@@ -86,16 +86,23 @@ export default function InstanceDetail({ instanceId }: Props) {
     refreshJobs();
   };
 
-  const jobs: DbInitJob[] = initJobsQuery.data ?? [];
+  // React Query 的类型在构建环境下可能推断为 `never[] | NonNullable<TQueryFnData>`，
+  // 这里显式断言为 DbInitJob[] 以消除联合类型造成的编译错误。
+  const jobs = (initJobsQuery.data ?? []) as DbInitJob[];
   // 使用数字数组跟踪展开记录，避免非可序列化状态(Set/Map)
   const defaultExpandedIds: number[] = [];
   const [expandedIds, setExpandedIds] = useState(defaultExpandedIds);
   const toggleExpand = (id: number) => {
     setExpandedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
-  const copyText = async (text: string) => {
+  const copyText = async (text?: string | null) => {
+    const value = typeof text === "string" ? text : "";
+    if (!value) {
+      toast.showInfo("无可复制内容");
+      return;
+    }
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(value);
       toast.showSuccess("已复制到剪贴板");
     } catch {
       toast.showError("复制失败");

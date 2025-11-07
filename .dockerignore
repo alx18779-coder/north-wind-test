@@ -1,0 +1,18 @@
+# Global ignores to speed up Docker context and avoid leaking dev artifacts
+.git
+.gitignore
+.venv
+.pytest_cache
+__pycache__
+**/*.pyc
+.uv-cache
+.pnpm-store
+
+# Frontend build artifacts and deps
+frontend/.next
+frontend/node_modules
+frontend/.env.local
+
+# OS/editor junk
+.DS_Store
+Thumbs.db
