@@ -10,6 +10,8 @@ services:
       - "5434:5432"
     volumes:
       - app_db_data:/var/lib/postgresql/data
+    networks:
+      - app_net
 
   northwind_pg:
     image: postgres:15
