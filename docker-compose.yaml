@@ -59,6 +59,8 @@ services:
       - "10000:10000"
     depends_on:
       - app_db
+    networks:
+      - app_net
 
   frontend:
     image: node:20-alpine
@@ -77,6 +79,11 @@ services:
       - "3000:3000"
     depends_on:
       - backend
+    networks:
+      - app_net
 
 volumes:
   app_db_data:
+
+networks:
+  app_net:
