@@ -3,15 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import httpClient from "../http-client";
-
-interface DatabaseInstance {
-  id: number;
-  name: string;
-  engine: string;
-  host: string;
-  port: number;
-  timeout_seconds: number;
-}
+import type { DatabaseInstance } from "../admin-api";
 
 const fetchInstances = async (): Promise<DatabaseInstance[]> => {
   const response = await httpClient.get<DatabaseInstance[]>("/admin/db-instances");
