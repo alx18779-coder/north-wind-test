@@ -24,6 +24,11 @@ router = APIRouter(prefix="/admin/db-instances", tags=["admin-db-instances"])
 def list_instances(session: Session = Depends(get_session)) -> List[DatabaseInstance]:
     return database_instance_service.list_instances(session)
 
+# 兼容无尾斜杠路径，避免代理/前端对尾斜杠的自动重定向造成循环
+@router.get("", response_model=List[DatabaseInstanceOut])
+def list_instances_no_slash(session: Session = Depends(get_session)) -> List[DatabaseInstance]:
+    return database_instance_service.list_instances(session)
+
 
 @router.post("/", response_model=DatabaseInstanceOut, status_code=status.HTTP_201_CREATED)
 def create_instance(payload: DatabaseInstanceCreate, session: Session = Depends(get_session)) -> DatabaseInstance:
