@@ -120,13 +120,13 @@ export interface AdminChangePasswordRequest {
 
 const adminApi = {
   listInstances() {
-    return httpClient.get<DatabaseInstance[]>("/admin/db-instances/");
+    return httpClient.get<DatabaseInstance[]>("/admin/db-instances");
   },
   getInstance(id: number) {
     return httpClient.get<DatabaseInstance>(`/admin/db-instances/${id}`);
   },
   createInstance(payload: InstanceCreateRequest) {
-    return httpClient.post<DatabaseInstance>("/admin/db-instances/", payload);
+    return httpClient.post<DatabaseInstance>("/admin/db-instances", payload);
   },
   updateInstance(id: number, payload: InstanceUpdateRequest) {
     return httpClient.patch<DatabaseInstance>(`/admin/db-instances/${id}`, payload);
@@ -147,7 +147,7 @@ const adminApi = {
     return httpClient.get<DbInitJob[]>(`/admin/db-instances/${id}/init-jobs`);
   },
   listQuestions() {
-    return httpClient.get<QuestionSummary[]>("/admin/questions/");
+    return httpClient.get<QuestionSummary[]>("/admin/questions");
   },
   getQuestion(id: number) {
     return httpClient.get<QuestionDetail>(`/admin/questions/${id}`);

@@ -14,7 +14,7 @@ interface DatabaseInstance {
 }
 
 const fetchInstances = async (): Promise<DatabaseInstance[]> => {
-  const response = await httpClient.get<DatabaseInstance[]>("/admin/db-instances/");
+  const response = await httpClient.get<DatabaseInstance[]>("/admin/db-instances");
   return response.data;
 };
 
