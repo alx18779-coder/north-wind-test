@@ -65,7 +65,10 @@ services:
     container_name: frontend
     working_dir: /app/frontend
     environment:
-      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:10000/api}
+      # 浏览器使用相对路径 /api，无需填写主机/IP
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-/api}
+      # Next.js 在服务端将 /api 代理到后端容器 backend:10000
+      NEXT_API_PROXY_TARGET: ${NEXT_API_PROXY_TARGET:-http://backend:10000/api}
       CI: "true"
     command: sh -lc "npm i -g pnpm && pnpm install && pnpm dev -H 0.0.0.0"
     volumes:
