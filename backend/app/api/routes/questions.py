@@ -26,9 +26,19 @@ router = APIRouter(prefix="/admin/questions", tags=["admin-questions"])
 def list_questions(session: Session = Depends(get_session)) -> List[Question]:
     return question_service.list_questions(session)
 
+# 兼容无尾斜杠 GET /admin/questions
+@router.get("", response_model=List[QuestionOut])
+def list_questions_no_slash(session: Session = Depends(get_session)) -> List[Question]:
+    return question_service.list_questions(session)
+
 
 @router.post("/", response_model=QuestionOut, status_code=status.HTTP_201_CREATED)
 def create_question(payload: QuestionCreate, session: Session = Depends(get_session)) -> Question:
+    return question_service.create_question(session, payload)
+
+# 兼容无尾斜杠 POST /admin/questions
+@router.post("", response_model=QuestionOut, status_code=status.HTTP_201_CREATED)
+def create_question_no_slash(payload: QuestionCreate, session: Session = Depends(get_session)) -> Question:
     return question_service.create_question(session, payload)
 
 

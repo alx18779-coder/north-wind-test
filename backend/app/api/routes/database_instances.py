@@ -34,6 +34,11 @@ def list_instances_no_slash(session: Session = Depends(get_session)) -> List[Dat
 def create_instance(payload: DatabaseInstanceCreate, session: Session = Depends(get_session)) -> DatabaseInstance:
     return database_instance_service.create_instance(session, payload)
 
+# 兼容无尾斜杠 POST /admin/db-instances
+@router.post("", response_model=DatabaseInstanceOut, status_code=status.HTTP_201_CREATED)
+def create_instance_no_slash(payload: DatabaseInstanceCreate, session: Session = Depends(get_session)) -> DatabaseInstance:
+    return database_instance_service.create_instance(session, payload)
+
 
 @router.get("/{instance_id}", response_model=DatabaseInstanceOut)
 def get_instance(instance_id: int, session: Session = Depends(get_session)) -> DatabaseInstance:
