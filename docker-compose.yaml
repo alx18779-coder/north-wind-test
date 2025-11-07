@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   app_db:
     image: postgres:15
@@ -40,21 +38,21 @@ services:
       - ./infrastructure/sql/northwind_mysql.sql:/docker-entrypoint-initdb.d/1-northwind.sql:ro
 
   backend:
-    image: python:3.11-slim
+    image: python:3.13-slim
     container_name: backend
     working_dir: /app
-    command: bash -lc "pip install -U pip uv && uv sync && uv run uvicorn backend.app.main:app --host 0.0.0.0 --port 10000 --reload"
+    command: bash -lc "pip install -U pip setuptools wheel && pip install -e . && python -m alembic upgrade head && uvicorn backend.app.main:app --host 0.0.0.0 --port 10000 --reload"
     environment:
-      ENVIRONMENT: dev
-      SECRET_KEY: dev-secret
-      JWT_SECRET: dev-jwt-secret
-      ENCRYPTION_KEY: dev-encryption-key
-      DATABASE_URL: postgresql+psycopg://app:app@app_db:5432/appdb
-      ALLOWED_CORS_ORIGINS: '["http://154.219.118.138:3000"]'
-      DEFAULT_TIMEOUT_SECONDS: "6"
-      DEFAULT_MAX_ROWS: "1000"
-      DEFAULT_CONCURRENCY_LIMIT: "5"
-      DEFAULT_RATE_LIMIT_PER_MINUTE: "30"
+      ENVIRONMENT: ${ENVIRONMENT:-dev}
+      SECRET_KEY: ${SECRET_KEY:-dev-secret}
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-dev-encryption-key}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://app:app@app_db:5432/appdb}
+      ALLOWED_CORS_ORIGINS: ${ALLOWED_CORS_ORIGINS:-["http://localhost:3000"]}
+      DEFAULT_TIMEOUT_SECONDS: ${DEFAULT_TIMEOUT_SECONDS:-"6"}
+      DEFAULT_MAX_ROWS: ${DEFAULT_MAX_ROWS:-"1000"}
+      DEFAULT_CONCURRENCY_LIMIT: ${DEFAULT_CONCURRENCY_LIMIT:-"5"}
+      DEFAULT_RATE_LIMIT_PER_MINUTE: ${DEFAULT_RATE_LIMIT_PER_MINUTE:-"30"}
     volumes:
       - ./:/app
     ports:
@@ -67,7 +65,7 @@ services:
     container_name: frontend
     working_dir: /app/frontend
     environment:
-      NEXT_PUBLIC_API_BASE_URL: http://154.219.118.138:10000/api
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:10000/api}
       CI: "true"
     command: sh -lc "npm i -g pnpm && pnpm install && pnpm dev -H 0.0.0.0"
     volumes:
