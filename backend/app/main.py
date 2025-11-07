@@ -6,6 +6,7 @@ from .api.router import api_router
 from .core.config import settings
 from .db.session import SessionLocal
 from .services import admin_service
+from .services.bootstrap_questions import ensure_default_questions
 
 
 def create_app() -> FastAPI:
@@ -49,6 +50,12 @@ def create_app() -> FastAPI:
         session = SessionLocal()
         try:
             admin_service.ensure_default_admin(session)
+            try:
+                summary = ensure_default_questions(session)
+                # 简单输出到控制台，便于 docker logs 可见
+                print({"bootstrap_questions": summary})
+            except Exception as exc:  # pragma: no cover - 不因导入失败阻断服务
+                print({"bootstrap_questions_error": str(exc)})
         finally:
             session.close()
 

@@ -13,31 +13,8 @@ services:
     networks:
       - app_net
 
-  northwind_pg:
-    image: postgres:15
-    container_name: northwind_pg
-    environment:
-      POSTGRES_DB: northwind
-      POSTGRES_USER: northwind
-      POSTGRES_PASSWORD: northwind
-    ports:
-      - "5433:5432"
-    volumes:
-      - ./infrastructure/sql/northwind_pg.sql:/docker-entrypoint-initdb.d/1-northwind.sql:ro
-
-  northwind_mysql:
-    image: mysql:8.0
-    container_name: northwind_mysql
-    command: ["--default-authentication-plugin=mysql_native_password", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: northwind
-      MYSQL_USER: northwind
-      MYSQL_PASSWORD: northwind
-    ports:
-      - "3307:3306"
-    volumes:
-      - ./infrastructure/sql/northwind_mysql.sql:/docker-entrypoint-initdb.d/1-northwind.sql:ro
+  # 移除内置 northwind_pg / northwind_mysql 容器，不再随 compose 提供练习库。
+  # 练习用的业务库由管理员在后台“数据库实例”中自行配置并可选择初始化脚本。
 
   backend:
     image: python:3.13-slim
