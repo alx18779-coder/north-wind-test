@@ -45,12 +45,12 @@ services:
     working_dir: /app
     command: bash -lc "pip install -U pip uv && uv sync && uv run uvicorn backend.app.main:app --host 0.0.0.0 --port 10000 --reload"
     environment:
-      APP_ENV: dev
-      APP_SECRET_KEY: dev-secret
+      ENVIRONMENT: dev
+      SECRET_KEY: dev-secret
       JWT_SECRET: dev-jwt-secret
       ENCRYPTION_KEY: dev-encryption-key
-      DB_APP_URL: postgresql+psycopg://app:app@app_db:5432/appdb
-      ALLOWED_CORS_ORIGINS: '["http://localhost:3000"]'
+      DATABASE_URL: postgresql+psycopg://app:app@app_db:5432/appdb
+      ALLOWED_CORS_ORIGINS: '["http://154.219.118.138:3000"]'
       DEFAULT_TIMEOUT_SECONDS: "6"
       DEFAULT_MAX_ROWS: "1000"
       DEFAULT_CONCURRENCY_LIMIT: "5"
@@ -67,9 +67,9 @@ services:
     container_name: frontend
     working_dir: /app/frontend
     environment:
-      NEXT_PUBLIC_API_BASE_URL: http://localhost:10000/api
+      NEXT_PUBLIC_API_BASE_URL: http://154.219.118.138:10000/api
       CI: "true"
-    command: sh -lc "npm i -g pnpm && pnpm install && pnpm dev"
+    command: sh -lc "npm i -g pnpm && pnpm install && pnpm dev -H 0.0.0.0"
     volumes:
       - ./:/app
     ports:
@@ -79,4 +79,3 @@ services:
 
 volumes:
   app_db_data:
-
