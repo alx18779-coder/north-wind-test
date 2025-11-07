@@ -1,0 +1,44 @@
+# syntax=docker/dockerfile:1
+
+FROM node:20-alpine AS deps
+WORKDIR /app/frontend
+RUN corepack enable
+ENV PNPM_HOME="/pnpm" \
+    PATH="/pnpm:$PATH"
+# 统一 store 目录，便于在多阶段之间复制
+RUN pnpm config set store-dir /pnpm/store
+COPY frontend/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY frontend/package.json ./package.json
+RUN pnpm fetch --prod
+
+FROM node:20-alpine AS build
+WORKDIR /app/frontend
+RUN corepack enable
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    NODE_ENV=production \
+    CI=true \
+    PNPM_HOME="/pnpm" \
+    PATH="/pnpm:$PATH"
+RUN pnpm config set store-dir /pnpm/store
+COPY --from=deps /pnpm/store /pnpm/store
+COPY frontend/ ./
+# 生产构建：构建阶段需要 devDependencies（tailwind/postcss）
+RUN pnpm install --frozen-lockfile --prefer-offline \
+ && pnpm build \
+ && pnpm prune --prod
+
+FROM node:20-alpine AS runner
+WORKDIR /app/frontend
+ENV NODE_ENV=production \
+    PORT=3000 \
+    HOST=0.0.0.0
+
+# 使用 Next 服务器运行（复制运行所需文件与依赖，已在上一步 prune 成生产依赖）
+COPY --from=build /app/frontend/node_modules ./node_modules
+COPY --from=build /app/frontend/.next ./.next
+COPY --from=build /app/frontend/public ./public
+COPY --from=build /app/frontend/package.json ./package.json
+COPY --from=build /app/frontend/next.config.mjs ./next.config.mjs
+
+EXPOSE 3000
+CMD ["node", "node_modules/next/dist/bin/next", "start", "-H", "0.0.0.0", "-p", "3000"]

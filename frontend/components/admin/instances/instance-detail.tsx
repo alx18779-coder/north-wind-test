@@ -7,6 +7,7 @@ import adminApi from "../../../lib/admin-api";
 import useToast from "../../../lib/hooks/use-toast";
 import useInstanceDetail from "../../../lib/hooks/use-instance-detail";
 import useInstanceInitJobs from "../../../lib/hooks/use-instance-init-jobs";
+import type { DbInitJob } from "../../../lib/admin-api";
 
 interface Props {
   instanceId: number;
@@ -85,7 +86,7 @@ export default function InstanceDetail({ instanceId }: Props) {
     refreshJobs();
   };
 
-  const jobs = initJobsQuery.data ?? [];
+  const jobs: DbInitJob[] = initJobsQuery.data ?? [];
   // 使用数字数组跟踪展开记录，避免非可序列化状态(Set/Map)
   const defaultExpandedIds: number[] = [];
   const [expandedIds, setExpandedIds] = useState(defaultExpandedIds);
