@@ -13,8 +13,6 @@ services:
     networks:
       - app_net
 
-  # 移除内置 northwind_pg / northwind_mysql 容器，不再随 compose 提供练习库。
-  # 练习用的业务库由管理员在后台“数据库实例”中自行配置并可选择初始化脚本。
 
   backend:
     image: python:3.13-slim
@@ -46,9 +44,7 @@ services:
     container_name: frontend
     working_dir: /app/frontend
     environment:
-      # 浏览器使用相对路径 /api，无需填写主机/IP
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-/api}
-      # Next.js 在服务端将 /api 代理到后端容器 backend:10000
       NEXT_API_PROXY_TARGET: ${NEXT_API_PROXY_TARGET:-http://backend:10000/api}
       CI: "true"
     command: sh -lc "npm i -g pnpm && pnpm install && pnpm dev -H 0.0.0.0"

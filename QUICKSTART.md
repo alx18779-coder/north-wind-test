@@ -75,8 +75,6 @@ docker compose up -d
 
 启动后包含：
 - `app_db`：系统库 PostgreSQL（保存用户、题库、日志等）
-- `northwind_pg`：练习用 PG 数据库（自动导入 Northwind）
-- `northwind_mysql`：练习用 MySQL 数据库（自动导入 Northwind）
 - `backend`：FastAPI API（端口 10000）
 - `frontend`：Next.js 前端（端口 3000）
 
@@ -93,8 +91,6 @@ docker compose up -d
      - 主机：`northwind_mysql`，端口：`3306`，数据库：`northwind`
      - 用户/密码：`northwind` / `northwind`
      - 标签：`mysql_default`
-3. 题库导入：
-   - 使用 `docs/questions_pg.csv` 与 `docs/questions_mysql.csv` 分别导入。
 
 ### 3) 典型命令
 ```bash
