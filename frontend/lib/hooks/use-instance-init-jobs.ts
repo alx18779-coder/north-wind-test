@@ -9,7 +9,9 @@ export default function useInstanceInitJobs(id: number) {
     queryKey: ["instance-init-jobs", id],
     queryFn: () => adminApi.listInitJobs(id).then((res) => res.data),
     enabled: !!id,
-    refetchInterval: (data: DbInitJob[] | undefined) => {
+    // 按 TanStack Query v5 签名：传入的是 Query 对象，而不是 data 本身
+    refetchInterval: (query) => {
+      const data = query.state.data as DbInitJob[] | undefined;
       const jobs = Array.isArray(data) ? data : [];
       if (jobs.length === 0) return false;
       const running = jobs.some((job) => job.status === "queued" || job.status === "running");
