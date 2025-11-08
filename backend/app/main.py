@@ -11,12 +11,14 @@ from .services.bootstrap_questions import ensure_default_questions
 
 def create_app() -> FastAPI:
     """Create and configure FastAPI application instance."""
+    # 在生产环境关闭交互式文档与 OpenAPI 输出，避免在公网暴露接口清单
+    is_prod = settings.environment == "prod"
     app = FastAPI(
         title=settings.app_name,
         version="0.1.0",
-        docs_url="/docs",
-        redoc_url="/redoc",
-        openapi_url="/openapi.json",
+        docs_url=None if is_prod else "/docs",
+        redoc_url=None if is_prod else "/redoc",
+        openapi_url=None if is_prod else "/openapi.json",
     )
 
     allow_origins = settings.allowed_cors_origins
