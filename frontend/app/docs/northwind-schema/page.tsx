@@ -1,7 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
-export const dynamic = "force-static";
+// 重要：改为运行时读取，避免构建阶段缺少 SQL 导致内容被“未找到”固化
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default function NorthwindSchemaPage() {
   const root = process.cwd();
