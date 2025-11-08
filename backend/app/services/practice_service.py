@@ -183,11 +183,39 @@ def get_reference_answer(session: Session, question_id: int, instance_tag: str) 
     question = _fetch_published_question(session, question_id)
     if instance_tag not in question.instance_tags:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Instance tag not allowed for this question")
+    # 1) 直接匹配（极少数情况下 reference.engine 与标签同名）
     for reference in question.reference_sql:
         if reference.engine == instance_tag:
             return reference.sql_text
-    instance = _find_instance_by_tag(session, instance_tag)
-    for reference in question.reference_sql:
-        if reference.engine == instance.engine:
-            return reference.sql_text
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reference answer unavailable for instance")
+
+    # 2) 尝试根据标签名推断引擎（pg*/postgres* -> postgres；mysql*/maria* -> mysql）
+    tag_lc = instance_tag.lower().strip()
+    engine_hint: str | None = None
+    if any(key in tag_lc for key in ("postgres", "postgresql", "pg")):
+        engine_hint = "postgres"
+    elif any(key in tag_lc for key in ("mysql", "maria", "mariadb")):
+        engine_hint = "mysql"
+    if engine_hint:
+        for reference in question.reference_sql:
+            if reference.engine == engine_hint:
+                return reference.sql_text
+
+    # 3) 正常路径：通过实例标签查找实例并用其实例引擎匹配参考答案
+    instance = database_instance_service.get_instance_by_tag(session, instance_tag)
+    if instance is not None:
+        for reference in question.reference_sql:
+            if reference.engine == instance.engine:
+                return reference.sql_text
+
+    # 4) 兜底：当题目只有一种参考引擎时，直接返回（放宽对“实例存在”的强依赖）
+    engines = {ref.engine for ref in question.reference_sql}
+    if len(engines) == 1:
+        return question.reference_sql[0].sql_text
+
+    # 5) 仍无法确定时返回 404，并给出更明确的原因提示
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=(
+            "Reference answer unavailable: missing matching engine or database instance for the selected tag"
+        ),
+    )
