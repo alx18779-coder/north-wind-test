@@ -90,6 +90,10 @@ TAG=v1.0.0 docker compose -f docker-compose.prod.yaml up -d
 - `backend`：FastAPI API（端口 10000）
 - `frontend`：Next.js 前端（端口 3000）
 
+> 重要：生产镜像不内置 Northwind DDL/数据脚本。`docker-compose.prod.yaml` 已将本仓库的 `infrastructure/sql` 以只读卷挂载到后端容器，确保在“数据库实例 -> 执行初始化”时可以找到脚本，避免“未找到DDL文件”。
+>
+> MySQL 初始化脚本已统一为合并版：`infrastructure/sql/northwind_mysql.sql`（不再使用 `infrastructure/sql/mysql/` 目录的拆分脚本）。
+
 ### 2) 健康检查
 ```bash
 curl -i http://<服务器IP>:10000/api/health/ready

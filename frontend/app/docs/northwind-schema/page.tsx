@@ -24,13 +24,13 @@ export default function NorthwindSchemaPage() {
         </div>
         <div className="flex gap-2">
           <a
-            href="/docs/northwind-schema/download"
+            href="/sql/northwind_pg.sql"
             className="rounded border border-slate-700 px-3 py-1 text-xs text-slate-200 hover:bg-slate-800"
           >
             下载 PostgreSQL SQL 文件
           </a>
           <a
-            href="/docs/northwind-schema/mysql"
+            href="/sql/northwind_mysql.sql"
             className="rounded border border-slate-700 px-3 py-1 text-xs text-slate-200 hover:bg-slate-800"
           >
             下载 MySQL SQL 文件

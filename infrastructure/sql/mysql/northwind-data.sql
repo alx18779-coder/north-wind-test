@@ -1,1 +1,0 @@
--- data script intentionally empty; schema+data contained in northwind.sql

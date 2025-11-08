@@ -3,7 +3,7 @@ Northwind SQL 实战平台（前后端一体）
 本仓库包含：
 - 后端：FastAPI + SQLAlchemy（目录：`backend/`）
 - 前端：Next.js 14 + React 18（目录：`frontend/`）
-- 数据脚本：Northwind 的 PostgreSQL/MySQL 脚本（目录：`infrastructure/sql/`）
+- 数据脚本：Northwind 的 PostgreSQL/MySQL 脚本（目录：`infrastructure/sql/`）。其中 MySQL 仅保留合并版脚本 `infrastructure/sql/northwind_mysql.sql`（已移除 `infrastructure/sql/mysql/` 拆分脚本）。
 - 文档：产品与运维文档（目录：`docs/`）
 
 部署提供两种方式：

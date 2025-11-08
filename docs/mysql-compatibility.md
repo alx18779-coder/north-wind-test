@@ -3,10 +3,11 @@
 ## Initialization Workflow
 1. Ensure target server uses MySQL 8.0+ with `utf8mb4` default charset.
 2. Create the database if missing: `CREATE DATABASE northwind CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`.
-3. Execute structural script `northwind.sql` from https://raw.githubusercontent.com/busynovadad/northwind-MySQL/refs/heads/master/northwind.sql.
-4. Execute data script `northwind-data.sql` from https://raw.githubusercontent.com/busynovadad/northwind-MySQL/refs/heads/master/northwind-data.sql.
-5. Grant read-only privileges to practice user: `GRANT SELECT ON northwind.* TO 'practice'@'%';`.
-6. Record job status in `db_init_jobs` with logs for troubleshooting.
+3. Execute the consolidated script stored in this repo: `infrastructure/sql/northwind_mysql.sql`.
+   - 本仓库已移除 `infrastructure/sql/mysql/` 目录的拆分脚本（`northwind.sql` 与 `northwind-data.sql`）。
+   - 后端“执行初始化”功能会自动使用该合并脚本，无需额外配置。
+4. Grant read-only privileges to practice user: `GRANT SELECT ON northwind.* TO 'practice'@'%';`.
+5. Record job status in `db_init_jobs` with logs for troubleshooting.
 
 ## Schema & Data Differences vs PostgreSQL
 - Auto-increment columns use `AUTO_INCREMENT` and may require `LAST_INSERT_ID` when writing (not needed here but note for reference answers).
