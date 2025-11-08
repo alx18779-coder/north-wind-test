@@ -25,6 +25,7 @@ RUN pip install --upgrade pip setuptools wheel \
 
 # 复制应用根目录（用于读取 docs CSV 引导题库）
 COPY docs ./docs
+COPY infrastructure/sql ./infrastructure/sql
 
 # 入口脚本：启动前迁移数据库
 COPY deploy/backend-entrypoint.sh /usr/local/bin/entrypoint.sh
@@ -38,4 +39,3 @@ ENV ENVIRONMENT=prod \
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "10000", "--workers", "2", "--proxy-headers"]
-

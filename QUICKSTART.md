@@ -1,8 +1,9 @@
-# 快速上手（两种部署方式）
+# 快速上手（手动 / 生产镜像 / 本地 compose）
 
-本文提供两种方式启动本项目：
+本文提供三种方式启动本项目：
 - 方式 A：手动部署（更灵活，适合开发调试）
-- 方式 B：一站式 docker-compose（更省心，适合快速体验）
+- 方式 B：生产部署（直接使用 Docker Hub 镜像）
+- 方式 C：本地源码 compose（便捷开发环境）
 
 ---
 
@@ -57,50 +58,100 @@
 ### 3) 配置练习实例与题库（手动方式）
 1. 用管理员登录前端（/login）。
 2. 在“数据库实例”中新建实例：
-   - PostgreSQL 示例：标签 `pg_default`
-   - MySQL 示例：标签 `mysql_default`
-3. 导入题库：在“题库导入”使用 `docs/questions_pg.csv` 与 `docs/questions_mysql.csv`，先“校验并预览”，再“导入”。
+   - PostgreSQL 示例：标签建议用 `pg_default`
+   - MySQL 示例：标签建议用 `mysql_default`
+  3. 导入题库：在“题库导入”使用 `docs/questions_pg.csv` 与 `docs/questions_mysql.csv`，先“校验并预览”，再“导入”。
 
 ---
 
-## 方式 B：一站式 docker-compose（含数据库 + 后端 + 前端）
+## 方式 B：生产部署（使用 Docker Hub 镜像）
+
+前置要求
+- Docker 24+ 与 Docker Compose v2+
+- 可访问 Docker Hub 仓库：`candy0327/north-wind-test`
+
+镜像标签说明（示例）
+- 后端：`candy0327/north-wind-test:backend-<TAG>`（如 `backend-latest`、`backend-<commit-sha>`）
+- 前端：`candy0327/north-wind-test:frontend-<TAG>`（如 `frontend-latest`、`frontend-<commit-sha>`）
+
+### 1) 一键启动（推荐）
+使用仓库根目录的 `docker-compose.prod.yaml`，支持通过 `TAG` 环境变量指定版本（默认 `latest`）。
+
+```bash
+# 使用 latest 标签
+docker compose -f docker-compose.prod.yaml up -d
+
+# 或指定某个版本标签（示例：v1.0.0）
+TAG=v1.0.0 docker compose -f docker-compose.prod.yaml up -d
+```
+
+启动服务包含：
+- `app_db`：系统库 PostgreSQL（保存管理员、题库、日志等）
+- `backend`：FastAPI API（端口 10000）
+- `frontend`：Next.js 前端（端口 3000）
+
+### 2) 健康检查
+```bash
+curl -i http://<服务器IP>:10000/api/health/ready
+curl -i http://<服务器IP>:3000/api/health/ready
+```
+
+### 3) 首次登录与练习实例配置
+1. 打开 `http://<服务器IP>:3000/login`，使用 `admin/admin` 登录并立即修改密码。
+2. 在“数据库实例”页面新增你自己的练习库连接（项目不再内置 Northwind 容器）：
+   - PostgreSQL：标签建议 `pg_default`
+   - MySQL：标签建议 `mysql_default`
+3. 点击“测试连接”应为“连接成功”，如需初始化 Northwind 示例数据，点击“执行初始化”。
+
+> 说明：前端默认同源请求 `/api`，由 Next 服务器代理到 `backend:10000/api`，无需硬编码后端 IP。
+
+### 4) 常用命令
+```bash
+# 查看日志
+docker compose -f docker-compose.prod.yaml logs -f backend
+docker compose -f docker-compose.prod.yaml logs -f frontend
+
+# 停止与清理
+docker compose -f docker-compose.prod.yaml down             # 仅停容器
+docker compose -f docker-compose.prod.yaml down -v          # 连同卷一起清理（含数据库数据）
+```
+
+### 5) 可选：.env 覆盖（生产建议使用）
+在 `docker-compose.prod.yaml` 同目录放置 `.env`，覆盖默认值（示例）：
+
+```env
+ENVIRONMENT=prod
+SECRET_KEY=请替换为强随机值
+JWT_SECRET=请替换为强随机值
+ENCRYPTION_KEY=请替换为强随机值
+DATABASE_URL=postgresql+psycopg://app:app@app_db:5432/appdb
+ALLOWED_CORS_ORIGINS=["http://你的域名或IP:3000"]
+```
+
+> 数字类变量请不要加引号，例如：`DEFAULT_MAX_ROWS=1000`。
+
+---
+
+## 方式 C：本地源码 compose（开发场景）
 
 前置要求
 - Docker 24+ 与 Docker Compose v2+
 
-### 1) 启动所有服务
+### 1) 启动
 ```bash
 docker compose up -d
 ```
 
-启动后包含：
-- `app_db`：系统库 PostgreSQL（保存用户、题库、日志等）
-- `backend`：FastAPI API（端口 10000）
-- `frontend`：Next.js 前端（端口 3000）
+包含服务：
+- `app_db`、`backend`、`frontend`（源码以卷挂载，前后端支持热更新）
 
-### 2) 首次登录与配置
-1. 打开 http://localhost:3000/login 使用 `admin/admin` 登录并立即修改密码。
-2. 在“数据库实例”新增两条记录（主机名用容器内 DNS 名称）：
-   - Northwind PG：
-     - 引擎：`postgres`
-     - 主机：`northwind_pg`，端口：`5432`，数据库：`northwind`
-     - 用户/密码：`northwind` / `northwind`
-     - 标签：`pg_default`
-   - Northwind MySQL：
-     - 引擎：`mysql`
-     - 主机：`northwind_mysql`，端口：`3306`，数据库：`northwind`
-     - 用户/密码：`northwind` / `northwind`
-     - 标签：`mysql_default`
+### 2) 登录与练习库配置
+- 登录信息同上：`admin/admin`
+- 在“数据库实例”中添加你可达的 PostgreSQL / MySQL，标签建议 `pg_default` / `mysql_default`，然后“测试连接”“执行初始化”。
 
-### 3) 典型命令
-```bash
-# 查看日志
-docker compose logs -f backend
-docker compose logs -f frontend
-
-# 停止与清理
-docker compose down             # 仅停容器
-docker compose down -v          # 连同卷一起清理（含数据库数据）
-```
-
-> 注意：compose 文件用于开发/体验环境。生产建议：固定镜像版本、使用反向代理（如 Nginx/Caddy）、在云服务或 k8s 上管理密钥与持久化卷。
+### 3) 常见问题
+- 如果希望彻底清空数据重新来过：
+  ```bash
+  docker compose down -v && docker volume rm north-wind-test_app_db_data || true
+  docker compose up -d
+  ```

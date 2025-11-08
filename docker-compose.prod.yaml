@@ -11,10 +11,8 @@ services:
     networks: [app_net]
 
   backend:
-    build:
-      context: .
-      dockerfile: deploy/Dockerfile.backend
-    image: northwind/backend:prod
+    # 使用 Docker Hub 上的后端镜像；通过 TAG 环境变量指定版本（默认 latest）
+    image: candy0327/north-wind-test:backend-${TAG:-latest}
     container_name: backend
     environment:
       ENVIRONMENT: ${ENVIRONMENT:-prod}
@@ -33,13 +31,13 @@ services:
     networks: [app_net]
 
   frontend:
-    build:
-      context: .
-      dockerfile: deploy/Dockerfile.frontend
-    image: northwind/frontend:prod
+    # 使用 Docker Hub 上的前端镜像；通过 TAG 环境变量指定版本（默认 latest）
+    image: candy0327/north-wind-test:frontend-${TAG:-latest}
     container_name: frontend
     environment:
+      # 浏览器端始终同源访问 /api
       NEXT_PUBLIC_API_BASE_URL: /api
+      # Next 服务器将 /api 代理到后端容器 backend:10000/api
       NEXT_API_PROXY_TARGET: http://backend:10000/api
       NODE_ENV: production
     ports:
@@ -52,4 +50,3 @@ volumes:
 
 networks:
   app_net:
-
