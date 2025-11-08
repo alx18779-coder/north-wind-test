@@ -5,12 +5,30 @@ export const dynamic = "force-static";
 
 export default function NorthwindSchemaPage() {
   const root = process.cwd();
-  const ddlPath = path.resolve(root, "../infrastructure/sql/northwind_pg.sql");
+  const candidates = [
+    // 源码/开发：前端工作目录外一层
+    path.resolve(root, "../infrastructure/sql/northwind_pg.sql"),
+    // 生产容器常见路径（Dockerfile.frontend COPY 目标）
+    "/app/infrastructure/sql/northwind_pg.sql",
+    // 静态资源目录（如通过 public/sql 提供下载）
+    path.resolve(root, "public/sql/northwind_pg.sql"),
+  ];
   let ddl = "";
-  try {
-    ddl = fs.readFileSync(ddlPath, "utf-8");
-  } catch {
-    ddl = "未找到 DDL 文件。请确认 infrastructure/sql/northwind_pg.sql 是否存在。";
+  let found = false;
+  for (const p of candidates) {
+    try {
+      if (fs.existsSync(p)) {
+        ddl = fs.readFileSync(p, "utf-8");
+        found = true;
+        break;
+      }
+    } catch {
+      // continue
+    }
+  }
+  if (!found) {
+    ddl =
+      "未找到 DDL 文件。请确认容器内存在 /app/infrastructure/sql/northwind_pg.sql 或已将文件放在 public/sql/northwind_pg.sql。";
   }
 
   return (

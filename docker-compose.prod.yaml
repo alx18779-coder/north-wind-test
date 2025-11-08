@@ -45,6 +45,10 @@ services:
       # Next 服务器将 /api 代理到后端容器 backend:10000/api
       NEXT_API_PROXY_TARGET: http://backend:10000/api
       NODE_ENV: production
+    volumes:
+      # 确保前端容器可读取 DDL（页面预览与静态下载均可）
+      - ./infrastructure/sql:/app/infrastructure/sql:ro
+      - ./infrastructure/sql:/app/frontend/public/sql:ro
     ports:
       - "3000:3000"
     depends_on: [backend]
