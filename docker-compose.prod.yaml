@@ -25,11 +25,7 @@ services:
       DEFAULT_MAX_ROWS: ${DEFAULT_MAX_ROWS:-1000}
       DEFAULT_CONCURRENCY_LIMIT: ${DEFAULT_CONCURRENCY_LIMIT:-5}
       DEFAULT_RATE_LIMIT_PER_MINUTE: ${DEFAULT_RATE_LIMIT_PER_MINUTE:-30}
-      # 指定 Northwind 脚本路径（与下方卷挂载一致）
-      NORTHWIND_PG_SCRIPT_PATH: /app/infrastructure/sql/northwind_pg.sql
-    volumes:
-      # 将仓库内的 SQL 脚本挂载到镜像内，避免“未找到DDL文件”
-      - ./infrastructure/sql:/app/infrastructure/sql:ro
+    
     ports:
       - "10000:10000"
     depends_on: [app_db]
